@@ -5,6 +5,7 @@ import com.CodeLab.Central_Service.integration.DBService;
 import com.CodeLab.Central_Service.integration.NotificationService;
 import com.CodeLab.Central_Service.integration.RabbitMQIntegration;
 import com.CodeLab.Central_Service.requestDTO.AdminRequestDTO;
+import com.CodeLab.Central_Service.requestDTO.NotificationMessage;
 import com.CodeLab.Central_Service.requestDTO.OTPGenerateRequestDTO;
 import com.CodeLab.Central_Service.responseDTO.IsEmailAlreadyPresentResponseDTO;
 import com.CodeLab.Central_Service.responseDTO.OTPVerificationResponseDTO;
@@ -51,7 +52,10 @@ public class AdminService {
         //send email to the user is remaining
 //        String message = notificationService.callSendMail(requestDTO).getMessage();
 //        System.out.println(message);
-        rabbitMQIntegration.insertMessageToQueue(requestDTO);
+        NotificationMessage message = new NotificationMessage();
+        message.setMessageType("OTP");
+        message.setPayload(requestDTO);
+        rabbitMQIntegration.insertMessageToQueue(message);
 
         dbService.callGenerateOtp(requestDTO);
 

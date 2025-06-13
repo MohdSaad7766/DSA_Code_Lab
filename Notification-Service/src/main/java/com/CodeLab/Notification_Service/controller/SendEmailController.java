@@ -22,7 +22,7 @@ public class SendEmailController {
     public ResponseEntity<?> sendOtpEmail(@RequestBody OTPGenerateRequestDTO requestDTO){
         GeneralResponseDTO responseDTO = new GeneralResponseDTO();
         try {
-            sendMailService.sendMail(requestDTO);
+            sendMailService.sendOtpMail(requestDTO);
 
             return new ResponseEntity<>(responseDTO, HttpStatus.OK);
 

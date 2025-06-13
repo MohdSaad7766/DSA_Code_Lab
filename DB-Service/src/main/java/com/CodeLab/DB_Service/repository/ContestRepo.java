@@ -50,4 +50,20 @@ public interface ContestRepo extends JpaRepository<Contest,UUID> {
             nativeQuery = true)
     Page<Contest> findAllPastContests(@Param("now") LocalDateTime now, Pageable pageable);
 
+    @Query(value = """
+    SELECT * FROM contests
+    WHERE start_time BETWEEN :now AND :buffer
+    AND start_reminder_sent = FALSE
+""", nativeQuery = true)
+    List<Contest> findContestsStartingNow(
+            @Param("now") LocalDateTime now,
+            @Param("buffer") LocalDateTime buffer
+    );
+
+    @Query("SELECT c FROM Contest c WHERE c.startTime BETWEEN :start AND :end")
+    List<Contest> findContestsStartingBetween(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
 }

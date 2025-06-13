@@ -80,11 +80,11 @@ public class AuthService {
                 System.out.println(response.getAdminId());
                 System.out.println(response.getPassword());
                 if (response == null) {
-                    log.warn("Admin not found for email: {}", email);
+//                    log.warn("Admin not found for email: {}", email);
                     return null;
                 }
                 boolean isPasswordValid = passwordEncoder.matches(password.trim(), response.getPassword());
-                log.info("Password validation result: {}", isPasswordValid);
+//                log.info("Password validation result: {}", isPasswordValid);
 
                 return isPasswordValid ? new Pair(credentials,response.getAdminId()) : null;
 

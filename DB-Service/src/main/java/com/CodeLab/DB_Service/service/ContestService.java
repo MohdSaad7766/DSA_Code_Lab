@@ -385,6 +385,7 @@ public class ContestService {
 
 
     public FullContestSubmission submitContest(UUID userId, UUID contestId) {
+        System.out.println("Contest Submission");
         Optional<FullContestSubmission> optionalSubmission =
                 submissionRepo.findByContestIdAndUserId(contestId, userId);
 
@@ -403,19 +404,30 @@ public class ContestService {
                 .map(ContestProblem::getProblem)
                 .toList();
 
+//        System.out.println("allProblems: "+allProblems);
+
         double totalPercentage = 0.0;
         int problemCount = allProblems.size();
+        System.out.println("problemCount: "+problemCount);
+//        System.out.println(allProblems.get(0));
 
         for (Problem problem : allProblems) {
             List<PartialContestSubmission> submissions = partialContestSubmissionRepo
                     .findByContestIdAndUserIdAndProblemId(contestId, userId, problem.getProblemId());
 
+//            System.out.println("Submissions: "+submissions);
             if (!submissions.isEmpty()) {
                 // Take the latest one or average one – here we use the latest submission
                 PartialContestSubmission latest = submissions.get(submissions.size() - 1);
+//                System.out.println(latest);
                 totalPercentage += latest.getPercentage();
             }
+            else {
+                System.out.println("Empty Partial Submission List");
+            }
+
         }
+        System.out.println("totalPercentage: "+totalPercentage);
 
         double averagePercentage = problemCount > 0 ? (totalPercentage / problemCount) : 0.0;
 

@@ -55,7 +55,7 @@ public class DBService extends RestAPI{
     }
 
     public OTPVerificationResponseDTO callVerifyUserOtp(UserRequestDTO requestDTO, String otp){
-        String endpoint = "/otp/verify";
+        String endpoint = "/otp/verify-user";
         HashMap<String,String> map = new HashMap<>();
         map.put("otp",otp);
 
@@ -66,7 +66,7 @@ public class DBService extends RestAPI{
     }
 
     public OTPVerificationResponseDTO callVerifyAdminOtp(AdminRequestDTO requestDTO, String otp){
-        String endpoint = "/otp/verify";
+        String endpoint = "/otp/verify-admin";
         HashMap<String,String> map = new HashMap<>();
         map.put("otp",otp);
 

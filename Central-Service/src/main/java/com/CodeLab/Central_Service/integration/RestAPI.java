@@ -46,7 +46,9 @@ public abstract class RestAPI {
     public Object makePutCall(String baseURL, String endpoint, Object requestBody, HashMap<String, String> queryParams) {
         String url = baseURL + endpoint;
         url = this.addQueryParams(new StringBuilder(url), queryParams);
+
         URI finalURL = URI.create(url);
+
 
         RequestEntity<Object> requestEntity = RequestEntity.put(finalURL).body(requestBody);
         ResponseEntity<Object> responseEntity = restTemplate.exchange(finalURL, HttpMethod.PUT, requestEntity, Object.class);

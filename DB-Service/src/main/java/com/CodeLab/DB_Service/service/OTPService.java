@@ -28,12 +28,14 @@ public class OTPService {
         otpRepo.save(otp);
     }
 
-    @Scheduled(fixedRate = 30000) // every 30 Seconds
+    @Scheduled(fixedRate = 10000) // every 10 Seconds
     public void deleteExpiredOtp() {
+        System.out.println("Check for Expired OTP");
         otpRepo.deleteByExpiryTimeBefore(LocalDateTime.now());
     }
-    @Scheduled(fixedRate = 30000)  // every 30 Seconds
+    @Scheduled(fixedRate = 10000)  // every 10 Seconds
     public void deleteVerifiedOtp() {
+        System.out.println("Check for Verified OTP");
         otpRepo.deleteVerifiedOTPs(true);
     }
 

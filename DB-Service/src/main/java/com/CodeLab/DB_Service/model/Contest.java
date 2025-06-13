@@ -36,4 +36,7 @@ public class Contest {
 
     @Column(name = "duration")
     private long duration; //In Seconds
+
+    @Column(name = "start_reminder_sent")
+    private boolean startReminderSent = false;
 }

@@ -27,4 +27,6 @@ public class Contest {
     private LocalDateTime endTime;
 
     private long duration; //In Seconds
+
+    private boolean startReminderSent = false;
 }

@@ -1,6 +1,7 @@
 package com.CodeLab.Central_Service.integration;
 
 
+import com.CodeLab.Central_Service.requestDTO.NotificationMessage;
 import com.CodeLab.Central_Service.requestDTO.OTPGenerateRequestDTO;
 import com.CodeLab.Central_Service.requestDTO.RunCodeRequestDTO;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -18,7 +19,7 @@ public class RabbitMQIntegration {
     String notificationExchangeName = "codelab-notification-exchange";
     String notificationRoutingKey = "codelab-notification-route-123";
 
-    public void insertMessageToQueue(OTPGenerateRequestDTO requestDTO){
+    public void insertMessageToQueue(NotificationMessage requestDTO){
         rabbitTemplate.convertAndSend(notificationExchangeName, notificationRoutingKey, requestDTO);
     }
 
