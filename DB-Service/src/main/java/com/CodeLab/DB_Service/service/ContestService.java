@@ -16,7 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.RequestParam;
+
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -51,9 +51,8 @@ public class ContestService {
     @Autowired
     LeaderboardEntryRepo leaderboardEntryRepo;
 
-    public ContestAddedResponseDTO addContest(ContestRequestDTO requestDTO){
+    public ContestAddedResponseDTO addContest(ContestRequestDTO requestDTO) {
         Contest contest = ContestConverter.contestConverter(requestDTO);
-
         contest = contestRepo.save(contest);
 
         List<ProblemRequestDTO> newProblemList = requestDTO.getNewProblemList();
@@ -61,30 +60,42 @@ public class ContestService {
 
         List<Problem> problemList = new ArrayList<>();
 
-        for(UUID id : existingProblemList){
+        // Add existing problems
+        for (UUID id : existingProblemList) {
             Problem problem = problemService.getProblem(id);
             problemList.add(problem);
         }
 
-        for(ProblemRequestDTO problemRequestDTO : newProblemList){
-            Problem problem = problemService.addProblem(problemRequestDTO,false);
+        // Add new problems
+        for (ProblemRequestDTO problemRequestDTO : newProblemList) {
+            Problem problem = problemService.addProblem(problemRequestDTO, false);
             problemList.add(problem);
         }
 
-        List<ContestProblem> contestProblemList = new ArrayList<>();
+        // ✅ Sort by Difficulty: EASY (0), MEDIUM (1), HARD (2)
+        problemList.sort(Comparator.comparing(p -> p.getProblemDifficulty().ordinal()));
 
-        for (Problem problem: problemList){
-            ContestProblem contestProblem = ContestConverter.contestProblemConverter(problem,contest);
+        // Assign contest question numbers based on sorted order
+        List<ContestProblem> contestProblemList = new ArrayList<>();
+        int questionNo = 1;
+        for (Problem problem : problemList) {
+            ContestProblem contestProblem = new ContestProblem();
+            contestProblem.setProblem(problem);
+            contestProblem.setContest(contest);
+            contestProblem.setContestQuestionNo(questionNo++);
+
             contestProblem = contestProblemRepo.save(contestProblem);
             contestProblemList.add(contestProblem);
         }
 
+        // Prepare response
         ContestAddedResponseDTO responseDTO = new ContestAddedResponseDTO();
         responseDTO.setContest(contest);
         responseDTO.setContestProblemList(contestProblemList);
 
         return responseDTO;
     }
+
 
     public Contest getContestById(UUID contestId){
         return contestRepo.findById(contestId).orElse(null);
@@ -341,14 +352,11 @@ public class ContestService {
         }
 
         List<ContestProblem> contestProblemList = contestProblemRepo.findByContestIdNative(contestId);
-        List<Problem> problemList = new ArrayList<>();
-        for (ContestProblem contestProblem : contestProblemList) {
-            problemList.add(contestProblem.getProblem());
-        }
+
 
         ContestStartResponseDTO responseDTO = new ContestStartResponseDTO();
         responseDTO.setContest(contest);
-        responseDTO.setProblemList(problemList);
+        responseDTO.setProblemList(contestProblemList);
         responseDTO.setRemainingTimeInSeconds(remainingTimeInSeconds); // 👈 Set remaining time
 
         return responseDTO;
@@ -592,19 +600,14 @@ public class ContestService {
         }
 
         List<ContestProblem> contestProblemList = contestProblemRepo.findByContestIdNative(contestId);
-        List<Problem> problemList = new ArrayList<>();
 
-        for(ContestProblem cp : contestProblemList){
-            Problem problem = cp.getProblem();
-            problemList.add(problem);
-        }
 
         return new PastContestResponseDTO(
                 contest,
                 isUserParticipated,
                 userRank,
                 leaderboard,
-                problemList,
+                contestProblemList,
                 leaderboardEntries.size()
         );
     }

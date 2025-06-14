@@ -21,13 +21,13 @@ public class ProblemRequestDTO {
 
     private List<ExampleRequestDTO> exampleRequestDTOList;//
 
-    private String problemConstraints;//
+    private List<String> problemConstraintsList;//
 
 
-    private String topicList;//
+    private List<String> topicList;
 
 
-    private String companyList;
+    private List<String> companyList;
 
     private List<TestCaseRequestDTO> testCaseRequestDTOList;
 

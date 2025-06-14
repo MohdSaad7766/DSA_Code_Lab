@@ -5,6 +5,7 @@ import com.CodeLab.Central_Service.model.Problem;
 import com.CodeLab.Central_Service.requestDTO.ProblemRequestDTO;
 import com.CodeLab.Central_Service.responseDTO.GeneralResponseDTO;
 import com.CodeLab.Central_Service.responseDTO.ProblemAddedResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.ProblemResponseDTO;
 import com.CodeLab.Central_Service.responseDTO.TokenValidationResponseDTO;
 import com.CodeLab.Central_Service.service.AuthenticationService;
 import com.CodeLab.Central_Service.service.ProblemService;
@@ -47,19 +48,42 @@ public class ProblemController {
 
     @GetMapping("/get")
     public ResponseEntity<?> getProblems(){
-        List<Problem> problemList = problemService.getProblems();
+        List<ProblemResponseDTO> problemList = problemService.getProblems();
         return new ResponseEntity<>(problemList,HttpStatus.OK);
     }
 
     @GetMapping("/get/page")
     public ResponseEntity<?> getProblemsByPage(@RequestParam int pageNo){
-        List<Problem> problemList = problemService.getProblemsByPage(pageNo);
+        if(pageNo <= 0){
+            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
+            generalResponseDTO.setMessage("Invalid Page No."+pageNo);
+            return new ResponseEntity<>(generalResponseDTO, HttpStatus.BAD_REQUEST);
+        }
+        List<ProblemResponseDTO> problemList = problemService.getProblemsByPage(pageNo);
         return new ResponseEntity<>(problemList,HttpStatus.OK);
     }
 
     @GetMapping("/get/{problemId}")
-    public ResponseEntity<?> getProblem(@PathVariable UUID problemId){
-        Problem problem = problemService.getProblemById(problemId);
+    public ResponseEntity<?> getProblemForUser(@PathVariable UUID problemId){
+        ProblemResponseDTO problem = problemService.getProblemByIdForUser(problemId);
+        if(problem == null){
+            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
+            generalResponseDTO.setMessage("Problem with Id-"+problemId+" not Found!!!");
+            return new ResponseEntity<>(generalResponseDTO,HttpStatus.OK);
+        }
+        return new ResponseEntity<>(problem,HttpStatus.OK);
+    }
+
+    @GetMapping("/get-for-system/{problemId}")
+    public ResponseEntity<?> getProblemForSystem(@PathVariable UUID problemId,@RequestHeader(value = "Authorization", required = false) String header){
+        TokenValidationResponseDTO tokenValidationResponseDTO = authenticationService.validateAdminToken(header);
+        System.out.println(tokenValidationResponseDTO.getMessage());
+
+        if (!tokenValidationResponseDTO.isValid()) {
+            return new ResponseEntity<>(tokenValidationResponseDTO, HttpStatus.UNAUTHORIZED);
+        }
+
+        Problem problem = problemService.getProblemByIdForSystem(problemId);
         if(problem == null){
             GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
             generalResponseDTO.setMessage("Problem with Id-"+problemId+" not Found!!!");
@@ -70,13 +94,13 @@ public class ProblemController {
 
     @GetMapping("/get-by-topic")
     public ResponseEntity<?> getProblemsTopicWise(@RequestParam String topicName){
-        List<Problem> problemList = problemService.getProblemsTopicWise(topicName);
+        List<ProblemResponseDTO> problemList = problemService.getProblemsTopicWise(topicName);
         return new ResponseEntity<>(problemList,HttpStatus.OK);
     }
 
     @GetMapping("/get-by-company")
     public ResponseEntity<?> getProblemsCompanyWise(@RequestParam String companyName){
-        List<Problem> problemList = problemService.getProblemsCompanyWise(companyName);
+        List<ProblemResponseDTO> problemList = problemService.getProblemsCompanyWise(companyName);
         return new ResponseEntity<>(problemList,HttpStatus.OK);
     }
 
@@ -94,7 +118,7 @@ public class ProblemController {
 
     @GetMapping("/get-by-difficulty")
     public ResponseEntity<?> getByDifficulty(@RequestParam Difficulty difficulty){
-        List<Problem> problemList = problemService.getProblemByDifficulty(difficulty);
+        List<ProblemResponseDTO> problemList = problemService.getProblemByDifficulty(difficulty);
 
         if(problemList == null || problemList.isEmpty()){
             return new ResponseEntity<>(problemList,HttpStatus.OK);
@@ -106,7 +130,22 @@ public class ProblemController {
 
     @GetMapping("/search")
     public ResponseEntity<?> searchProblem(@RequestParam String keyword){
-        List<Problem> problemList =  problemService.searchProblem(keyword);
+        System.out.println(keyword);
+        List<ProblemResponseDTO> problemList =  problemService.searchProblem(keyword);
+        if(problemList == null || problemList.size() == 0){
+            return new ResponseEntity<>(problemList,HttpStatus.OK);
+        }
+        return new ResponseEntity<>(problemList,HttpStatus.OK);
+    }
+
+    @GetMapping("/search/{pageNo}")
+    public ResponseEntity<?> searchProblem(@PathVariable int pageNo,@RequestParam String keyword){
+        if(pageNo <= 0){
+            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
+            generalResponseDTO.setMessage("Invalid Page No."+pageNo);
+            return new ResponseEntity<>(generalResponseDTO, HttpStatus.BAD_REQUEST);
+        }
+        List<ProblemResponseDTO> problemList =  problemService.searchProblem(keyword,pageNo);
         if(problemList == null || problemList.size() == 0){
             return new ResponseEntity<>(problemList,HttpStatus.OK);
         }

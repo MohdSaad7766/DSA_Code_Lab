@@ -18,7 +18,6 @@ import java.util.UUID;
 
 public class Problem {
 
-
     private UUID problemId;
 
 

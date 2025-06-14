@@ -1,6 +1,7 @@
 package com.CodeLab.Central_Service.responseDTO;
 
 import com.CodeLab.Central_Service.model.Contest;
+import com.CodeLab.Central_Service.model.ContestProblem;
 import com.CodeLab.Central_Service.model.Problem;
 import lombok.*;
 
@@ -18,6 +19,6 @@ public class PastContestResponseDTO {
     private boolean userParticipated;
     private Integer userRank;
     List<LeaderboardEntryResponseDTO> leaderboard = new ArrayList<>();
-    List<Problem> problemList = new ArrayList<>();
+    List<ContestProblem> problemList = new ArrayList<>();
     private int totalParticipants;
 }

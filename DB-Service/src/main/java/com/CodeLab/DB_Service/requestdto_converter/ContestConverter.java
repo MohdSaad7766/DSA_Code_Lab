@@ -24,8 +24,4 @@ public class ContestConverter {
         contestProblem.setContestQuestionNo(0);
         return contestProblem;
     }
-
-
-
-
 }

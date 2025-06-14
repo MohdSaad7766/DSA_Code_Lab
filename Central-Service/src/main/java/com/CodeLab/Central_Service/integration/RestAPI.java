@@ -70,6 +70,7 @@ public abstract class RestAPI {
     public List<Object> makeGetCallAsList(String baseURL, String endpoint, HashMap<String, String> queryParams) {
         String url = this.addQueryParams(new StringBuilder(baseURL + endpoint), queryParams);
 
+        System.out.println(url);
         RequestEntity<Void> requestEntity = RequestEntity.get(URI.create(url)).build();
 
         ResponseEntity<List<Object>> responseEntity = restTemplate.exchange(

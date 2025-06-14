@@ -17,12 +17,12 @@ import com.CodeLab.DB_Service.requestdto_converter.CompanyConverter;
 import com.CodeLab.DB_Service.requestdto_converter.ProblemConverter;
 import com.CodeLab.DB_Service.requestdto_converter.TestCaseConverter;
 import com.CodeLab.DB_Service.requestdto_converter.TopicConverter;
+import com.CodeLab.DB_Service.responseDTO.ProblemResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ProblemService {
@@ -41,14 +41,13 @@ public class ProblemService {
     }
 
     public Problem addProblem(ProblemRequestDTO problemRequestDTO,boolean isVisible) {
-        problemRequestDTO.setTopicList(problemRequestDTO.getTopicList().toUpperCase());
-        problemRequestDTO.setCompanyList(problemRequestDTO.getCompanyList().toUpperCase());
-        Problem problem = ProblemConverter.problemConverter(problemRequestDTO,isVisible);
+
+        Problem problem = ProblemConverter.requestDTO_problemConverter(problemRequestDTO,isVisible);
 
         int totalProblems = (int) this.getProblemCount();
         problem.setProblemNo(totalProblems + 1);
 
-        String[] topicList = problemRequestDTO.getTopicList().split(",");
+        String[] topicList = problem.getTopicList().split(",");
         for (String rawTopic : topicList) {
             final String topicName = rawTopic.trim();
             topicRepo.findByTopicName(topicName).orElseGet(() -> {
@@ -57,7 +56,7 @@ public class ProblemService {
             });
         }
 
-        String[] companyList = problemRequestDTO.getCompanyList().split(",");
+        String[] companyList = problem.getCompanyList().split(",");
         for (String rawCompany : companyList) {
             final String companyName = rawCompany.trim();
             companyRepo.findByCompanyName(companyName).orElseGet(() -> {
@@ -70,26 +69,50 @@ public class ProblemService {
     }
 
 
-    public List<Problem> getProblems() {
-        return problemRepo.getAllVisibleProblems();
+    public List<ProblemResponseDTO> getProblems() {
+
+        List<Problem>  problemList = problemRepo.getAllVisibleProblems();
+        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
+
+        return responseDTOList;
     }
 
-    public Page<Problem> getProblems(int pageNo) {
+    public List<ProblemResponseDTO> getProblems(int pageNo) {
         int pageSize = 10;
         Pageable pageable = PageRequest.of(pageNo-1, pageSize, Sort.by("problemNo").ascending());
-        return problemRepo.findAllByIsVisibleTrue(pageable);
+        List<Problem>  problemList =  problemRepo.findAllByIsVisibleTrue(pageable).getContent();
+        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
+
+        return responseDTOList;
     }
 
     public Problem getProblem(UUID problemId) {
         return problemRepo.findById(problemId).orElse(null);
     }
 
-    public List<Problem> getProblemsTopicWise(String topicName) {
-        return problemRepo.findByTopicName(normalize(topicName));
+    public ProblemResponseDTO getProblemForUser(UUID problemId) {
+
+        Problem problem =  problemRepo.findById(problemId).orElse(null);
+        if(problem == null) {
+            return null;
+        }
+
+        ProblemResponseDTO responseDTO = ProblemConverter.problem_responseDTOConverter(problem);
+        return responseDTO;
     }
 
-    public List<Problem> getProblemsCompanyWise(String companyName) {
-        return problemRepo.findByCompanyName(normalize(companyName));
+    public List<ProblemResponseDTO> getProblemsTopicWise(String topicName) {
+        List<Problem>  problemList =  problemRepo.findByTopicName(normalize(topicName));
+        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
+
+        return responseDTOList;
+    }
+
+    public List<ProblemResponseDTO> getProblemsCompanyWise(String companyName) {
+        List<Problem>  problemList =  problemRepo.findByCompanyName(normalize(companyName));
+        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
+
+        return responseDTOList;
     }
 
     public long getProblemsCountTopicWise(String topicName) {
@@ -100,14 +123,45 @@ public class ProblemService {
         return problemRepo.countByCompanyName(normalize(companyName));
     }
 
-    public List<Problem> searchProblem(String keyword) {
-        return problemRepo.problemSearch(keyword);
+    public List<ProblemResponseDTO> searchProblem(String keyword) {
+        String[] keywords = keyword.trim().toLowerCase().split("[_\\s]+");
+        Set<Problem> problemSet = new HashSet<>();
+
+        for (String key : keywords) {
+            problemSet.addAll(problemRepo.searchVisibleProblems(key));
+        }
+
+        return ProblemConverter.problem_responseDTOConverter(new ArrayList<>(problemSet));
     }
 
-    public Page<Problem> searchVisibleProblems(String keyword, int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("problemNo").ascending());
-        return problemRepo.searchVisibleProblems(keyword, pageable);
+    public List<ProblemResponseDTO> searchVisibleProblems(String keyword, int pageNo) {
+        int pageSize = 10;
+        pageNo--;
+        String[] keywords = keyword.trim().toLowerCase().split("[_\\s]+");
+        Set<Problem> problemSet = new HashSet<>();
+
+        for (String key : keywords) {
+            List<Problem> results = problemRepo.searchVisibleProblems(key);
+            System.out.println("Key: " + key + " -> " + results.size() + " results");
+            problemSet.addAll(results);
+        }
+
+        List<Problem> problemList = new ArrayList<>(problemSet);
+        problemList.sort(Comparator.comparing(Problem::getProblemNo));
+
+        int start = pageNo * pageSize;
+        int end = Math.min(start + pageSize, problemList.size());
+
+        System.out.println("Total results: " + problemList.size() + ", Showing from: " + start + " to: " + end);
+
+        if (start >= problemList.size()) {
+            return Collections.emptyList();
+        }
+
+        List<Problem> pagedList = problemList.subList(start, end);
+        return ProblemConverter.problem_responseDTOConverter(pagedList);
     }
+
 
     public void deleteProblem(UUID problemId) {
         if (getProblem(problemId) == null) {
@@ -138,11 +192,15 @@ public class ProblemService {
         problemRepo.save(problem);
     }
 
-    public List<Problem> getProblemByDifficulty(Difficulty difficulty) {
-        return problemRepo.findProblemByDifficulty(difficulty.toString());
+    public List<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty) {
+        List<Problem>  problemList =  problemRepo.findProblemByDifficulty(difficulty.toString());
+        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
+
+        return responseDTOList;
     }
 
     private String normalize(String s) {
         return s.toUpperCase().trim().replaceAll("_", " ");
     }
+
 }

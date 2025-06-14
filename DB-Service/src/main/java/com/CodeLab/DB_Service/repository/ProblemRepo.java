@@ -26,26 +26,16 @@ public interface ProblemRepo extends JpaRepository<Problem, UUID> {
     @Query(value = "SELECT COUNT(*) FROM Problems WHERE company_list LIKE %:companyName% AND is_visible = true", nativeQuery = true)
     long countByCompanyName(@Param("companyName") String companyName);
 
-    @Query(value = "SELECT * FROM Problems WHERE " +
-            "(LOWER(CAST(problem_no AS TEXT)) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(problem_title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(topic_list) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND is_visible = true",
-            nativeQuery = true)
-    List<Problem> problemSearch(@Param("keyword") String keyword);
-
-    @Query(value = "SELECT * FROM Problems WHERE " +
-            "(LOWER(CAST(problem_no AS TEXT)) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(problem_title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(topic_list) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND is_visible = true",
-            countQuery = "SELECT COUNT(*) FROM Problems WHERE " +
-                    "(LOWER(CAST(problem_no AS TEXT)) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                    "OR LOWER(problem_title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                    "OR LOWER(topic_list) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-                    "AND is_visible = true",
-            nativeQuery = true)
-    Page<Problem> searchVisibleProblems(@Param("keyword") String keyword, Pageable pageable);
+    @Query(value = """
+    SELECT * FROM Problems 
+    WHERE is_visible = true AND (
+        LOWER(CAST(problem_no AS TEXT)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(problem_title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(topic_list) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+    ORDER BY problem_no ASC
+    """, nativeQuery = true)
+    List<Problem> searchVisibleProblems(@Param("keyword") String keyword);
 
     @Query(value = "SELECT * FROM Problems WHERE problem_difficulty = :difficulty AND is_visible = true", nativeQuery = true)
     List<Problem> findProblemByDifficulty(@Param("difficulty") String difficulty);

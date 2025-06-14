@@ -110,36 +110,47 @@ public class DBService extends RestAPI{
         return modelMapper.map(response,ProblemAddedResponseDTO.class);
     }
 
-    public List<Problem> callGetProblems(){
+    public List<ProblemResponseDTO> callGetProblems(){
         String endpoint = "/problem/get";
         List<Object> response = this.makeGetCallAsList(baseURL,endpoint,new HashMap<>());
 
-        List<Problem> list = new ArrayList<>();
+        List<ProblemResponseDTO> list = new ArrayList<>();
 
         for(Object obj : response){
-            list.add(modelMapper.map(obj,Problem.class));
+            list.add(modelMapper.map(obj,ProblemResponseDTO.class));
         }
         return list;
     }
 
-    public List<Problem> callGetProblemsByPage(int pageNo){
+    public List<ProblemResponseDTO> callGetProblemsByPage(int pageNo){
         String endpoint = "/problem/get/page";
         HashMap<String,String> map = new HashMap<>();
         map.put("pageNo",pageNo+"");
 
         List<Object> response = this.makeGetCallAsList(baseURL,endpoint,map);
 
-        List<Problem> list = new ArrayList<>();
+        List<ProblemResponseDTO> list = new ArrayList<>();
 
         for(Object obj : response){
-            list.add(modelMapper.map(obj,Problem.class));
+            list.add(modelMapper.map(obj,ProblemResponseDTO.class));
         }
         return list;
     }
 
+    public ProblemResponseDTO callGetProblemForUser(UUID problemId){
+        String endpoint = "/problem/get-for-user/"+problemId;
 
-    public Problem callGetProblem(UUID problemId){
-        String endpoint = "/problem/get/"+problemId;
+        Object response = this.makeGetCall(baseURL,endpoint,new HashMap<>());
+        if (response == null){
+            return null;
+        }
+
+        return modelMapper.map(response,ProblemResponseDTO.class);
+    }
+
+
+    public Problem callGetProblemForSystem(UUID problemId){
+        String endpoint = "/problem/get-for-system/"+problemId;
 
         Object response = this.makeGetCall(baseURL,endpoint,new HashMap<>());
         if (response == null){
@@ -150,33 +161,33 @@ public class DBService extends RestAPI{
     }
 
 
-    public List<Problem> callGetProblemsTopicWise(String topicName){
+    public List<ProblemResponseDTO> callGetProblemsTopicWise(String topicName){
         String endpoint = "/problem/get-by-topic";
         HashMap<String,String> map = new HashMap<>();
         map.put("topicName",topicName);
 
         List<Object> response = this.makeGetCallAsList(baseURL,endpoint,map);
 
-        List<Problem> list = new ArrayList<>();
+        List<ProblemResponseDTO> list = new ArrayList<>();
 
         for(Object obj : response){
-            list.add(modelMapper.map(obj,Problem.class));
+            list.add(modelMapper.map(obj,ProblemResponseDTO.class));
         }
         return list;
     }
 
 
-    public List<Problem> callGetProblemsCompanyWise(String companyName){
+    public List<ProblemResponseDTO> callGetProblemsCompanyWise(String companyName){
         String endpoint = "/problem/get-by-company";
         HashMap<String,String> map = new HashMap<>();
         map.put("companyName",companyName);
 
         List<Object> response = this.makeGetCallAsList(baseURL,endpoint,map);
 
-        List<Problem> list = new ArrayList<>();
+        List<ProblemResponseDTO> list = new ArrayList<>();
 
         for(Object obj : response){
-            list.add(modelMapper.map(obj,Problem.class));
+            list.add(modelMapper.map(obj,ProblemResponseDTO.class));
         }
         return list;
     }
@@ -205,32 +216,48 @@ public class DBService extends RestAPI{
     }
 
 
-    public List<Problem> callSearchProblem(String keyword){
+    public List<ProblemResponseDTO> callSearchProblem(String keyword){
+
         String endpoint = "/problem/search";
         HashMap<String,String> map = new HashMap<>();
         map.put("keyword",keyword);
 
         List<Object> response = this.makeGetCallAsList(baseURL,endpoint,map);
 
-        List<Problem> list = new ArrayList<>();
+        List<ProblemResponseDTO> list = new ArrayList<>();
 
         for(Object obj : response){
-            list.add(modelMapper.map(obj,Problem.class));
+            list.add(modelMapper.map(obj,ProblemResponseDTO.class));
         }
         return list;
     }
 
-    public List<Problem> callGetProblemByDifficulty(Difficulty difficulty){
+    public List<ProblemResponseDTO> callSearchProblem(String keyword,int pageNo){
+        String endpoint = "/problem/search/"+pageNo;
+        HashMap<String,String> map = new HashMap<>();
+        map.put("keyword",keyword);
+
+        List<Object> response = this.makeGetCallAsList(baseURL,endpoint,map);
+
+        List<ProblemResponseDTO> list = new ArrayList<>();
+
+        for(Object obj : response){
+            list.add(modelMapper.map(obj,ProblemResponseDTO.class));
+        }
+        return list;
+    }
+
+    public List<ProblemResponseDTO> callGetProblemByDifficulty(Difficulty difficulty){
         String endpoint = "/problem/get-by-difficulty";
         HashMap<String,String> map = new HashMap<>();
         map.put("difficulty",difficulty.toString());
 
         List<Object> response = this.makeGetCallAsList(baseURL,endpoint,map);
 
-        List<Problem> list = new ArrayList<>();
+        List<ProblemResponseDTO> list = new ArrayList<>();
 
         for(Object obj : response){
-            list.add(modelMapper.map(obj,Problem.class));
+            list.add(modelMapper.map(obj,ProblemResponseDTO.class));
         }
         return list;
     }

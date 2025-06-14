@@ -131,7 +131,7 @@ public class CodeExecutionService {
                 ? requestDTO.getVisibleCode() + "\n" + requestDTO.getInvisibleCode()
                 : requestDTO.getInvisibleCode() + "\n" + requestDTO.getVisibleCode();
 
-        Problem problem = dbService.callGetProblem(problemId);
+        Problem problem = dbService.callGetProblemForSystem(problemId);
         if (problem == null) {
             throw new ErrorException("Problem Not Found!!!");
         }
@@ -253,7 +253,7 @@ public class CodeExecutionService {
         UUID problemId = requestDTO.getProblemId();
 
         // Fetch problem and validate
-        Problem problem = dbService.callGetProblem(problemId);
+        Problem problem = dbService.callGetProblemForSystem(problemId);
         if (problem == null) {
             throw new NotFoundException("Problem with id-" + userId + " not Found!!!");
         }
@@ -296,7 +296,7 @@ public class CodeExecutionService {
         UUID problemId = requestDTO.getProblemId();
 
         // Fetch problem and validate
-        Problem problem = dbService.callGetProblem(problemId);
+        Problem problem = dbService.callGetProblemForSystem(problemId);
         if (problem == null) {
             throw new NotFoundException("Problem with id-" + userId + " not Found!!!");
         }

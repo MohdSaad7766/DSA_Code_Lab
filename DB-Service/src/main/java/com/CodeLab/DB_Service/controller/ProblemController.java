@@ -7,6 +7,7 @@ import com.CodeLab.DB_Service.requestDTO.ProblemRequestDTO;
 import com.CodeLab.DB_Service.requestDTO.TestCaseRequestDTO;
 import com.CodeLab.DB_Service.responseDTO.GeneralResponseDTO;
 import com.CodeLab.DB_Service.responseDTO.ProblemAddedResponseDTO;
+import com.CodeLab.DB_Service.responseDTO.ProblemResponseDTO;
 import com.CodeLab.DB_Service.service.ProblemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -36,29 +37,34 @@ public class ProblemController {
     }
 
     @GetMapping("/get")
-    public List<Problem> getProblems(){
+    public List<ProblemResponseDTO> getProblems(){
 
         return problemService.getProblems();
     }
 
     @GetMapping("/get/page")
-    public List<Problem> getProblemsByPage(@RequestParam int pageNo){
+    public List<ProblemResponseDTO> getProblemsByPage(@RequestParam int pageNo){
 
-        return problemService.getProblems(pageNo).getContent();
+        return problemService.getProblems(pageNo);
     }
 
-    @GetMapping("/get/{problemId}")
-    public Problem getProblemById(@PathVariable UUID problemId){
+    @GetMapping("/get-for-user/{problemId}")
+    public ProblemResponseDTO getProblemByIdForUser(@PathVariable UUID problemId){
+        return problemService.getProblemForUser(problemId);
+    }
+
+    @GetMapping("/get-for-system/{problemId}")
+    public Problem getProblemByIdForAdmin(@PathVariable UUID problemId){
         return problemService.getProblem(problemId);
     }
 
     @GetMapping("/get-by-topic")
-    public List<Problem> getProblemsTopicWise(@RequestParam String topicName){
+    public List<ProblemResponseDTO> getProblemsTopicWise(@RequestParam String topicName){
         return problemService.getProblemsTopicWise(topicName);
     }
 
     @GetMapping("/get-by-company")
-    public List<Problem> getProblemsCompanyWise(@RequestParam String companyName){
+    public List<ProblemResponseDTO> getProblemsCompanyWise(@RequestParam String companyName){
         return problemService.getProblemsCompanyWise(companyName);
     }
 
@@ -73,8 +79,14 @@ public class ProblemController {
     }
 
     @GetMapping("/search")
-    public List<Problem> searchProblem(@RequestParam String keyword){
+    public List<ProblemResponseDTO> searchProblem(@RequestParam String keyword){
         return problemService.searchProblem(keyword);
+    }
+
+    @GetMapping("/search/{pageNo}")
+    public List<ProblemResponseDTO> searchProblem(@PathVariable int pageNo,@RequestParam String keyword){
+        System.out.println("search by page");
+        return problemService.searchVisibleProblems(keyword,pageNo);
     }
 
     @DeleteMapping("/delete/{problemId}")
@@ -122,7 +134,7 @@ public class ProblemController {
     }
 
     @GetMapping("/get-by-difficulty")
-    public List<Problem> getProblemByDifficulty(@RequestParam Difficulty difficulty){
+    public List<ProblemResponseDTO> getProblemByDifficulty(@RequestParam Difficulty difficulty){
         return problemService.getProblemByDifficulty(difficulty);
     }
 

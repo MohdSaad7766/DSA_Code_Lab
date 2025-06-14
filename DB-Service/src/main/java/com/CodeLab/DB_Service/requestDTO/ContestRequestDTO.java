@@ -1,6 +1,6 @@
 package com.CodeLab.DB_Service.requestDTO;
 
-import com.CodeLab.DB_Service.model.Problem;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
