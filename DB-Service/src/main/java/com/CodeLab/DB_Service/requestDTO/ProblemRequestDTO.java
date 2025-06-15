@@ -23,9 +23,7 @@ public class ProblemRequestDTO {
 
     private List<String> problemConstraintsList;//
 
-
     private List<String> topicList;
-
 
     private List<String> companyList;
 
@@ -36,4 +34,5 @@ public class ProblemRequestDTO {
     private List<CodeTemplateRequestDTO> codeTemplateRequestDTOList;
 
     private String note;
+
 }

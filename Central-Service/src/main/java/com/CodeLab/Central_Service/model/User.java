@@ -1,6 +1,7 @@
 package com.CodeLab.Central_Service.model;
 
 import com.CodeLab.Central_Service.enums.Gender;
+import com.CodeLab.Central_Service.enums.Language;
 import com.CodeLab.Central_Service.enums.UserCategory;
 
 import lombok.*;
@@ -46,7 +47,7 @@ public class User {
     private UserCategory userCategory;
 
 
-//    private List<Submission> submissionList;
+    private Language preferredLanguage;
 
 
 

@@ -6,32 +6,32 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class RestAPI {
 
     @Autowired
     RestTemplate restTemplate;
 
-    public String addQueryParams(StringBuilder url,HashMap<String,String> queryParams){
-        int size = queryParams.size();
+    private String addQueryParams(StringBuilder url, HashMap<String, String> params) {
+        if (params != null && !params.isEmpty()) {
+            url.append("?");
+            List<String> queryParts = new ArrayList<>();
+            for (Map.Entry<String, String> entry : params.entrySet()) {
 
-        if(size == 0){
-            return url.toString();
-        }
+                String key = entry.getKey();
+                String value = entry.getValue().replace(" ", "%20");
+                queryParts.add(key + "=" + value);
 
-        url.append("?");
-
-        for(String key : queryParams.keySet()){
-            url.append(key);
-            url.append("=");
-            url.append(queryParams.get(key));
-
-            if(size > 1){
-                url.append("&");
             }
-            size--;
+            url.append(String.join("&", queryParts));
         }
         return url.toString();
     }

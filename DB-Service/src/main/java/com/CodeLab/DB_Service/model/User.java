@@ -1,6 +1,7 @@
 package com.CodeLab.DB_Service.model;
 
 import com.CodeLab.DB_Service.enums.Gender;
+import com.CodeLab.DB_Service.enums.Language;
 import com.CodeLab.DB_Service.enums.UserCategory;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -57,11 +58,8 @@ public class User {
     @Enumerated(value = EnumType.STRING)
     private UserCategory userCategory;
 
-//    @JsonManagedReference
-//    @OneToMany(mappedBy = "user")
-//    private List<Submission> submissionList;
-
-//    @Column(name = "is_verified",nullable = false)
-//    private boolean verified;
+    @Column(name = "preferred_language",nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private Language preferredLanguage;
 
 }

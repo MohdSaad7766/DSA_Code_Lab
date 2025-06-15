@@ -1,5 +1,6 @@
 package com.CodeLab.DB_Service.requestdto_converter;
 
+import com.CodeLab.DB_Service.enums.UserProblemStatus;
 import com.CodeLab.DB_Service.model.*;
 import com.CodeLab.DB_Service.requestDTO.*;
 import com.CodeLab.DB_Service.responseDTO.*;
@@ -77,6 +78,7 @@ public class ProblemConverter {
         responseDTO.setTestCasesList(ProblemConverter.testCaseConverter(problem.getTestCasesList()));
         responseDTO.setSolution(ProblemConverter.solutionConverter(problem.getSolution()));
         responseDTO.setCodeTemplateList(ProblemConverter.codeTemplateConverter(problem.getCodeTemplateList()));
+        responseDTO.setUserProblemStatus(UserProblemStatus.UNATTEMPTED);
 
         return responseDTO;
     }

@@ -1,6 +1,7 @@
 package com.CodeLab.Central_Service.requestDTO;
 
 import com.CodeLab.Central_Service.enums.Gender;
+import com.CodeLab.Central_Service.enums.Language;
 import com.CodeLab.Central_Service.enums.UserCategory;
 import lombok.*;
 
@@ -23,5 +24,7 @@ public class UserRequestDTO {
     private LocationRequestDTO locationRequestDTO;
 
     private UserCategory userCategory;
+
+    private Language preferredLanguage;
 
 }

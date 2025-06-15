@@ -1,181 +1,286 @@
 package com.CodeLab.Central_Service.contoller;
 
 import com.CodeLab.Central_Service.enums.Difficulty;
+import com.CodeLab.Central_Service.enums.UserProblemStatus;
 import com.CodeLab.Central_Service.model.Problem;
 import com.CodeLab.Central_Service.requestDTO.ProblemRequestDTO;
-import com.CodeLab.Central_Service.responseDTO.GeneralResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.ProblemAddedResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.ProblemResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.TokenValidationResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.*;
 import com.CodeLab.Central_Service.service.AuthenticationService;
 import com.CodeLab.Central_Service.service.ProblemService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/central/problem")
+@RequestMapping("/central/problem") // http://localhost:8080/central/problem
 public class ProblemController {
-    @Autowired
-    ProblemService problemService;
+
+    private static final Logger logger = LoggerFactory.getLogger(ProblemController.class);
 
     @Autowired
-    AuthenticationService authenticationService;
+    private ProblemService problemService;
+
+    @Autowired
+    private AuthenticationService authenticationService;
+
+    // Helper: Page number validation
+    private boolean isInvalidPage(int pageNo) {
+        return pageNo <= 0;
+    }
+
+    // Helper: Create generic response
+    private ResponseEntity<GeneralResponseDTO> badRequest(String message) {
+        GeneralResponseDTO response = new GeneralResponseDTO();
+        response.setMessage(message);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    // Helper: Admin token validation
+    private ResponseEntity<?> validateAdmin(String header) {
+        TokenValidationResponseDTO token = authenticationService.validateAdminToken(header);
+        logger.info("Admin Token Check: " + token.getMessage());
+        if (!token.isValid()) {
+            return new ResponseEntity<>(token, HttpStatus.UNAUTHORIZED);
+        }
+        return null;
+    }
+
+    // Helper: User token validation
+    private TokenValidationResponseDTO validateUser(String header) {
+        TokenValidationResponseDTO token = authenticationService.validateUserToken(header);
+        logger.info("User Token Check: " + token.getMessage());
+        return token;
+    }
+
+    // ==================== Add Problem ====================
 
     @PostMapping("/add")
-    public ResponseEntity<?> addProblem(@RequestBody ProblemRequestDTO problemRequestDTO,@RequestHeader(value = "Authorization", required = false) String header){
-        TokenValidationResponseDTO tokenValidationResponseDTO = authenticationService.validateAdminToken(header);
-        System.out.println(tokenValidationResponseDTO.getMessage());
+    public ResponseEntity<?> addProblem(@RequestBody ProblemRequestDTO problemRequestDTO,
+                                        @RequestHeader(value = "Authorization", required = false) String header) {
+        ResponseEntity<?> authCheck = validateAdmin(header);
+        if (authCheck != null) return authCheck;
 
-        if (!tokenValidationResponseDTO.isValid()) {
-            return new ResponseEntity<>(tokenValidationResponseDTO, HttpStatus.UNAUTHORIZED);
-        }
-        ProblemAddedResponseDTO responseDTO = problemService.addProblem(problemRequestDTO);
-
-        if(responseDTO.getProblem() != null){
-            responseDTO.setMessage("Problem Added Successfully:)");
-            return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
-        }
-        else{
-            responseDTO.setMessage("Problem Not Added!!!");
-            return new ResponseEntity<>(responseDTO,HttpStatus.OK);
-        }
+        ProblemAddedResponseDTO response = problemService.addProblem(problemRequestDTO);
+        response.setMessage(response.getProblem() != null ? "Problem Added Successfully :)" : "Problem Not Added!!!");
+        return new ResponseEntity<>(response, response.getProblem() != null ? HttpStatus.CREATED : HttpStatus.OK);
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<?> getProblems(){
-        List<ProblemResponseDTO> problemList = problemService.getProblems();
-        return new ResponseEntity<>(problemList,HttpStatus.OK);
+    // ==================== Get All Problems ====================
+
+    @GetMapping("/get/{pageNo}")
+    public ResponseEntity<?> getProblemsByPage(@PathVariable int pageNo,
+                                               @RequestHeader(value = "Authorization", required = false) String header) {
+        if (isInvalidPage(pageNo)) return badRequest("Invalid Page No. " + pageNo);
+
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsByPage(pageNo, token.getUserId()) :
+                        problemService.getProblemsByPage(pageNo),
+                HttpStatus.OK
+        );
     }
 
-    @GetMapping("/get/page")
-    public ResponseEntity<?> getProblemsByPage(@RequestParam int pageNo){
-        if(pageNo <= 0){
-            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
-            generalResponseDTO.setMessage("Invalid Page No."+pageNo);
-            return new ResponseEntity<>(generalResponseDTO, HttpStatus.BAD_REQUEST);
-        }
-        List<ProblemResponseDTO> problemList = problemService.getProblemsByPage(pageNo);
-        return new ResponseEntity<>(problemList,HttpStatus.OK);
+    @GetMapping("/get/")
+    public ResponseEntity<?> getProblems(@RequestHeader(value = "Authorization", required = false) String header) {
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsByPage(0, token.getUserId()) :
+                        problemService.getProblemsByPage(0),
+                HttpStatus.OK
+        );
     }
 
-    @GetMapping("/get/{problemId}")
-    public ResponseEntity<?> getProblemForUser(@PathVariable UUID problemId){
+    @GetMapping("/get-a-problem/{problemId}")
+    public ResponseEntity<?> getProblemForUser(@PathVariable UUID problemId) {
         ProblemResponseDTO problem = problemService.getProblemByIdForUser(problemId);
-        if(problem == null){
-            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
-            generalResponseDTO.setMessage("Problem with Id-"+problemId+" not Found!!!");
-            return new ResponseEntity<>(generalResponseDTO,HttpStatus.OK);
-        }
-        return new ResponseEntity<>(problem,HttpStatus.OK);
+        if (problem == null)
+            return new ResponseEntity<>(new GeneralResponseDTO("Problem with Id-" + problemId + " not Found!!!"), HttpStatus.OK);
+        return new ResponseEntity<>(problem, HttpStatus.OK);
     }
 
     @GetMapping("/get-for-system/{problemId}")
-    public ResponseEntity<?> getProblemForSystem(@PathVariable UUID problemId,@RequestHeader(value = "Authorization", required = false) String header){
-        TokenValidationResponseDTO tokenValidationResponseDTO = authenticationService.validateAdminToken(header);
-        System.out.println(tokenValidationResponseDTO.getMessage());
-
-        if (!tokenValidationResponseDTO.isValid()) {
-            return new ResponseEntity<>(tokenValidationResponseDTO, HttpStatus.UNAUTHORIZED);
-        }
+    public ResponseEntity<?> getProblemForSystem(@PathVariable UUID problemId,
+                                                 @RequestHeader(value = "Authorization", required = false) String header) {
+        ResponseEntity<?> authCheck = validateAdmin(header);
+        if (authCheck != null) return authCheck;
 
         Problem problem = problemService.getProblemByIdForSystem(problemId);
-        if(problem == null){
-            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
-            generalResponseDTO.setMessage("Problem with Id-"+problemId+" not Found!!!");
-            return new ResponseEntity<>(generalResponseDTO,HttpStatus.OK);
-        }
-        return new ResponseEntity<>(problem,HttpStatus.OK);
+        if (problem == null)
+            return new ResponseEntity<>(new GeneralResponseDTO("Problem with Id-" + problemId + " not Found!!!"), HttpStatus.OK);
+
+        return new ResponseEntity<>(problem, HttpStatus.OK);
     }
 
-    @GetMapping("/get-by-topic")
-    public ResponseEntity<?> getProblemsTopicWise(@RequestParam String topicName){
-        List<ProblemResponseDTO> problemList = problemService.getProblemsTopicWise(topicName);
-        return new ResponseEntity<>(problemList,HttpStatus.OK);
+    // ==================== Filter by Topic ====================
+
+    @GetMapping("/get-by-topic/{pageNo}")
+    public ResponseEntity<?> getProblemsTopicWise(@PathVariable int pageNo,
+                                                  @RequestParam String topicName,
+                                                  @RequestHeader(value = "Authorization", required = false) String header) {
+        if (isInvalidPage(pageNo)) return badRequest("Invalid Page No. " + pageNo);
+
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsTopicWise(pageNo, topicName, token.getUserId()) :
+                        problemService.getProblemsTopicWise(pageNo, topicName),
+                HttpStatus.OK
+        );
     }
 
-    @GetMapping("/get-by-company")
-    public ResponseEntity<?> getProblemsCompanyWise(@RequestParam String companyName){
-        List<ProblemResponseDTO> problemList = problemService.getProblemsCompanyWise(companyName);
-        return new ResponseEntity<>(problemList,HttpStatus.OK);
+    @GetMapping("/get-by-topic/")
+    public ResponseEntity<?> getProblemsTopicWise(@RequestParam String topicName,
+                                                  @RequestHeader(value = "Authorization", required = false) String header) {
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsTopicWise(0, topicName, token.getUserId()) :
+                        problemService.getProblemsTopicWise(0, topicName),
+                HttpStatus.OK
+        );
     }
+
+    // ==================== Filter by Company ====================
+
+    @GetMapping("/get-by-company/{pageNo}")
+    public ResponseEntity<?> getProblemsCompanyWise(@PathVariable int pageNo,
+                                                    @RequestParam String companyName,
+                                                    @RequestHeader(value = "Authorization", required = false) String header) {
+        if (isInvalidPage(pageNo)) return badRequest("Invalid Page No. " + pageNo);
+
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsCompanyWise(pageNo, companyName, token.getUserId()) :
+                        problemService.getProblemsCompanyWise(pageNo, companyName),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/get-by-company/")
+    public ResponseEntity<?> getProblemsCompanyWise(@RequestParam String companyName,
+                                                    @RequestHeader(value = "Authorization", required = false) String header) {
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsCompanyWise(0, companyName, token.getUserId()) :
+                        problemService.getProblemsCompanyWise(0, companyName),
+                HttpStatus.OK
+        );
+    }
+
+    // ==================== Filter by Status ====================
+
+    @GetMapping("/get-by-status/{pageNo}")
+    public ResponseEntity<?> getProblemsStatusWise(@PathVariable int pageNo,
+                                                   @RequestParam UserProblemStatus status,
+                                                   @RequestHeader(value = "Authorization", required = false) String header) {
+        if (isInvalidPage(pageNo)) return badRequest("Invalid Page No. " + pageNo);
+
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsStatusWise(pageNo, status, token.getUserId()) :
+                        problemService.getProblemsStatusWise(pageNo, status),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/get-by-status/")
+    public ResponseEntity<?> getProblemsStatusWise(@RequestParam UserProblemStatus status,
+                                                   @RequestHeader(value = "Authorization", required = false) String header) {
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemsStatusWise(0, status, token.getUserId()) :
+                        problemService.getProblemsStatusWise(0, status),
+                HttpStatus.OK
+        );
+    }
+
+    // ==================== Filter by Difficulty ====================
+
+    @GetMapping("/get-by-difficulty/{pageNo}")
+    public ResponseEntity<?> getByDifficulty(@PathVariable int pageNo,
+                                             @RequestParam Difficulty difficulty,
+                                             @RequestHeader(value = "Authorization", required = false) String header) {
+        if (isInvalidPage(pageNo)) return badRequest("Invalid Page No. " + pageNo);
+
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemByDifficulty(pageNo, difficulty, token.getUserId()) :
+                        problemService.getProblemByDifficulty(pageNo, difficulty),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/get-by-difficulty/")
+    public ResponseEntity<?> getByDifficulty(@RequestParam Difficulty difficulty,
+                                             @RequestHeader(value = "Authorization", required = false) String header) {
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.getProblemByDifficulty(0, difficulty, token.getUserId()) :
+                        problemService.getProblemByDifficulty(0, difficulty),
+                HttpStatus.OK
+        );
+    }
+
+    // ==================== Search ====================
+
+    @GetMapping("/search/{pageNo}")
+    public ResponseEntity<?> searchProblem(@PathVariable int pageNo,
+                                           @RequestParam String keyword,
+                                           @RequestHeader(value = "Authorization", required = false) String header) {
+        if (isInvalidPage(pageNo)) return badRequest("Invalid Page No. " + pageNo);
+
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.searchProblem(keyword, pageNo, token.getUserId()) :
+                        problemService.searchProblem(keyword, pageNo),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/search/")
+    public ResponseEntity<?> searchProblem(@RequestParam String keyword,
+                                           @RequestHeader(value = "Authorization", required = false) String header) {
+        TokenValidationResponseDTO token = validateUser(header);
+        return new ResponseEntity<>(
+                token.isValid() ? problemService.searchProblem(keyword, 0, token.getUserId()) :
+                        problemService.searchProblem(keyword, 0),
+                HttpStatus.OK
+        );
+    }
+
+    // ==================== Counts ====================
 
     @GetMapping("/get-count-by-topic")
-    public ResponseEntity<?> getProblemsCountTopicWise(@RequestParam String topicName){
-        Long ctn = problemService.getProblemsCountTopicWise(topicName);
-        return new ResponseEntity<>(ctn,HttpStatus.OK);
+    public ResponseEntity<?> getProblemsCountTopicWise(@RequestParam String topicName) {
+        return new ResponseEntity<>(problemService.getProblemsCountTopicWise(topicName), HttpStatus.OK);
     }
 
     @GetMapping("/get-count-by-company")
-    public ResponseEntity<?> getProblemsCountCompanyWise(@RequestParam String companyName){
-        Long ctn = problemService.getProblemsCountCompanyWise(companyName);
-        return new ResponseEntity<>(ctn,HttpStatus.OK);
+    public ResponseEntity<?> getProblemsCountCompanyWise(@RequestParam String companyName) {
+        return new ResponseEntity<>(problemService.getProblemsCountCompanyWise(companyName), HttpStatus.OK);
     }
 
-    @GetMapping("/get-by-difficulty")
-    public ResponseEntity<?> getByDifficulty(@RequestParam Difficulty difficulty){
-        List<ProblemResponseDTO> problemList = problemService.getProblemByDifficulty(difficulty);
-
-        if(problemList == null || problemList.isEmpty()){
-            return new ResponseEntity<>(problemList,HttpStatus.OK);
-        }
-        return new ResponseEntity<>(problemList,HttpStatus.OK);
-    }
-
-
-
-    @GetMapping("/search")
-    public ResponseEntity<?> searchProblem(@RequestParam String keyword){
-        System.out.println(keyword);
-        List<ProblemResponseDTO> problemList =  problemService.searchProblem(keyword);
-        if(problemList == null || problemList.size() == 0){
-            return new ResponseEntity<>(problemList,HttpStatus.OK);
-        }
-        return new ResponseEntity<>(problemList,HttpStatus.OK);
-    }
-
-    @GetMapping("/search/{pageNo}")
-    public ResponseEntity<?> searchProblem(@PathVariable int pageNo,@RequestParam String keyword){
-        if(pageNo <= 0){
-            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
-            generalResponseDTO.setMessage("Invalid Page No."+pageNo);
-            return new ResponseEntity<>(generalResponseDTO, HttpStatus.BAD_REQUEST);
-        }
-        List<ProblemResponseDTO> problemList =  problemService.searchProblem(keyword,pageNo);
-        if(problemList == null || problemList.size() == 0){
-            return new ResponseEntity<>(problemList,HttpStatus.OK);
-        }
-        return new ResponseEntity<>(problemList,HttpStatus.OK);
-    }
-
+    // ==================== Delete ====================
 
     @DeleteMapping("/delete/{problemId}")
-    public ResponseEntity<?> deleteById(@PathVariable UUID problemId, @RequestHeader(value = "Authorization", required = false) String header){
-        TokenValidationResponseDTO responseDTO = authenticationService.validateAdminToken(header);
-        System.out.println(responseDTO.getMessage());
+    public ResponseEntity<?> deleteById(@PathVariable UUID problemId,
+                                        @RequestHeader(value = "Authorization", required = false) String header) {
+        ResponseEntity<?> authCheck = validateAdmin(header);
+        if (authCheck != null) return authCheck;
 
-        if (!responseDTO.isValid()) {
-            return new ResponseEntity<>(responseDTO, HttpStatus.UNAUTHORIZED);
-        }
-        GeneralResponseDTO generalResponseDTO = problemService.deleteById(problemId);
-        return new ResponseEntity<>(generalResponseDTO,HttpStatus.OK);
+        return new ResponseEntity<>(problemService.deleteById(problemId), HttpStatus.OK);
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteAll(@RequestHeader(value = "Authorization", required = false) String header){
-        TokenValidationResponseDTO responseDTO = authenticationService.validateAdminToken(header);
-        System.out.println(responseDTO.getMessage());
+    public ResponseEntity<?> deleteAll(@RequestHeader(value = "Authorization", required = false) String header) {
+        ResponseEntity<?> authCheck = validateAdmin(header);
+        if (authCheck != null) return authCheck;
 
-        if (!responseDTO.isValid()) {
-            return new ResponseEntity<>(responseDTO, HttpStatus.UNAUTHORIZED);
-        }
-
-        GeneralResponseDTO generalResponseDTO = problemService.deleteAll();
-        return new ResponseEntity<>(generalResponseDTO,HttpStatus.OK);
+        return new ResponseEntity<>(problemService.deleteAll(), HttpStatus.OK);
     }
-
 }

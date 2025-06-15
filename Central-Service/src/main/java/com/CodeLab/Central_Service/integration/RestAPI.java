@@ -7,30 +7,36 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class RestAPI {
 
     @Autowired
     RestTemplate restTemplate;
 
-    public String addQueryParams(StringBuilder url, HashMap<String, String> queryParams) {
-        if (queryParams.isEmpty()) {
-            return url.toString();
-        }
+    private String addQueryParams(StringBuilder url, HashMap<String, String> params) {
+        if (params != null && !params.isEmpty()) {
+            url.append("?");
+            List<String> queryParts = new ArrayList<>();
+            for (Map.Entry<String, String> entry : params.entrySet()) {
 
-        url.append("?");
-        int count = 0;
-        for (var entry : queryParams.entrySet()) {
-            url.append(entry.getKey()).append("=").append(entry.getValue());
-            if (++count < queryParams.size()) {
-                url.append("&");
+                String key = entry.getKey();
+                String value = entry.getValue().replace(" ", "%20");
+                queryParts.add(key + "=" + value);
+
             }
+            url.append(String.join("&", queryParts));
         }
         return url.toString();
     }
+
 
     public Object makePostCall(String baseURL, String endpoint, Object requestBody, HashMap<String, String> queryParams) {
         String url = baseURL + endpoint;

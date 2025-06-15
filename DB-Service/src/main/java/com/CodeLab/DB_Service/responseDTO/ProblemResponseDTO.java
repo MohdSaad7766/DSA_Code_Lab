@@ -1,5 +1,6 @@
 package com.CodeLab.DB_Service.responseDTO;
 
+import com.CodeLab.DB_Service.enums.UserProblemStatus;
 import com.CodeLab.DB_Service.enums.Difficulty;
 
 import lombok.*;
@@ -42,5 +43,7 @@ public class ProblemResponseDTO {
     private List<CodeTemplateResponseDTO> codeTemplateList = new ArrayList<>();
 
     private String note;
+
+    private UserProblemStatus userProblemStatus;
 
 }

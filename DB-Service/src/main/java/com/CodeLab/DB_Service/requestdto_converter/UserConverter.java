@@ -17,6 +17,7 @@ public class UserConverter {
         user.setPassword(userRequestDTO.getPassword());
         user.setGender(userRequestDTO.getGender());
         user.setUserCategory(userRequestDTO.getUserCategory());
+        user.setPreferredLanguage(userRequestDTO.getPreferredLanguage());
 
         Location location = LocationConverter.locationConverter(userRequestDTO.getLocationRequestDTO());
         user.setLocation(location);

@@ -1,13 +1,13 @@
 package com.CodeLab.DB_Service.service;
 
 import com.CodeLab.DB_Service.enums.Difficulty;
+import com.CodeLab.DB_Service.enums.SubmissionStatus;
+import com.CodeLab.DB_Service.enums.UserProblemStatus;
 import com.CodeLab.DB_Service.exceptions.NotFoundException;
-import com.CodeLab.DB_Service.model.Company;
-import com.CodeLab.DB_Service.model.Problem;
-import com.CodeLab.DB_Service.model.TestCase;
-import com.CodeLab.DB_Service.model.Topic;
+import com.CodeLab.DB_Service.model.*;
 import com.CodeLab.DB_Service.repository.CompanyRepo;
 import com.CodeLab.DB_Service.repository.ProblemRepo;
+import com.CodeLab.DB_Service.repository.SubmissionRepo;
 import com.CodeLab.DB_Service.repository.TopicRepo;
 import com.CodeLab.DB_Service.requestDTO.CompanyRequestDTO;
 import com.CodeLab.DB_Service.requestDTO.ProblemRequestDTO;
@@ -18,14 +18,19 @@ import com.CodeLab.DB_Service.requestdto_converter.ProblemConverter;
 import com.CodeLab.DB_Service.requestdto_converter.TestCaseConverter;
 import com.CodeLab.DB_Service.requestdto_converter.TopicConverter;
 import com.CodeLab.DB_Service.responseDTO.ProblemResponseDTO;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProblemService {
+
+    private static final int PAGE_SIZE = 10;
+    private static final Sort SORT_BY_PROBLEM_NO = Sort.by("problemNo").ascending();
 
     @Autowired
     private ProblemRepo problemRepo;
@@ -36,171 +41,288 @@ public class ProblemService {
     @Autowired
     private TopicRepo topicRepo;
 
-    public long getProblemCount() {
-        return problemRepo.count();
-    }
+    @Autowired
+    private UserService userService;
 
-    public Problem addProblem(ProblemRequestDTO problemRequestDTO,boolean isVisible) {
+    @Autowired
+    private SubmissionRepo submissionRepo;
 
-        Problem problem = ProblemConverter.requestDTO_problemConverter(problemRequestDTO,isVisible);
+    // --------------------- CRUD Operations ---------------------
 
-        int totalProblems = (int) this.getProblemCount();
-        problem.setProblemNo(totalProblems + 1);
-
-        String[] topicList = problem.getTopicList().split(",");
-        for (String rawTopic : topicList) {
-            final String topicName = rawTopic.trim();
-            topicRepo.findByTopicName(topicName).orElseGet(() -> {
-                Topic topic = TopicConverter.topicConverter(new TopicRequestDTO(topicName));
-                return topicRepo.save(topic);
-            });
-        }
-
-        String[] companyList = problem.getCompanyList().split(",");
-        for (String rawCompany : companyList) {
-            final String companyName = rawCompany.trim();
-            companyRepo.findByCompanyName(companyName).orElseGet(() -> {
-                Company company = CompanyConverter.companyConverter(new CompanyRequestDTO(companyName));
-                return companyRepo.save(company);
-            });
-        }
-
-        return problemRepo.save(problem);
-    }
-
-
-    public List<ProblemResponseDTO> getProblems() {
-
-        List<Problem>  problemList = problemRepo.getAllVisibleProblems();
-        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
-
-        return responseDTOList;
-    }
-
-    public List<ProblemResponseDTO> getProblems(int pageNo) {
-        int pageSize = 10;
-        Pageable pageable = PageRequest.of(pageNo-1, pageSize, Sort.by("problemNo").ascending());
-        List<Problem>  problemList =  problemRepo.findAllByIsVisibleTrue(pageable).getContent();
-        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
-
-        return responseDTOList;
-    }
-
+    /**
+     * Fetch a single problem by ID.
+     */
     public Problem getProblem(UUID problemId) {
         return problemRepo.findById(problemId).orElse(null);
     }
 
+    /**
+     * Fetch a single problem and return a response DTO.
+     */
     public ProblemResponseDTO getProblemForUser(UUID problemId) {
-
-        Problem problem =  problemRepo.findById(problemId).orElse(null);
-        if(problem == null) {
-            return null;
-        }
-
-        ProblemResponseDTO responseDTO = ProblemConverter.problem_responseDTOConverter(problem);
-        return responseDTO;
+        Problem problem = problemRepo.findById(problemId).orElse(null);
+        return (problem == null) ? null : ProblemConverter.problem_responseDTOConverter(problem);
     }
 
-    public List<ProblemResponseDTO> getProblemsTopicWise(String topicName) {
-        List<Problem>  problemList =  problemRepo.findByTopicName(normalize(topicName));
-        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
+    /**
+     * Add a new problem with specified visibility.
+     */
+    public Problem addProblem(ProblemRequestDTO problemRequestDTO, boolean isVisible) {
+        Problem problem = ProblemConverter.requestDTO_problemConverter(problemRequestDTO, isVisible);
+        problem.setProblemNo((int) this.getProblemCount() + 1);
 
-        return responseDTOList;
+        Arrays.stream(problem.getTopicList().split(","))
+                .map(String::trim)
+                .forEach(topic -> topicRepo.findByTopicName(topic)
+                        .orElseGet(() -> topicRepo.save(TopicConverter.topicConverter(new TopicRequestDTO(topic)))));
+
+        Arrays.stream(problem.getCompanyList().split(","))
+                .map(String::trim)
+                .forEach(company -> companyRepo.findByCompanyName(company)
+                        .orElseGet(() -> companyRepo.save(CompanyConverter.companyConverter(new CompanyRequestDTO(company)))));
+
+        return problemRepo.save(problem);
     }
 
-    public List<ProblemResponseDTO> getProblemsCompanyWise(String companyName) {
-        List<Problem>  problemList =  problemRepo.findByCompanyName(normalize(companyName));
-        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
-
-        return responseDTOList;
+    /**
+     * Delete a problem by ID.
+     */
+    public void deleteProblem(UUID problemId) {
+        if (getProblem(problemId) == null)
+            throw new NotFoundException("Problem with id-" + problemId + " not found!!!");
+        problemRepo.deleteById(problemId);
     }
 
+    /**
+     * Delete all problems.
+     */
+    public void deleteAllProblems() {
+        if (this.getProblemCount() == 0)
+            throw new NotFoundException("There is not any problem present in the Database");
+        problemRepo.deleteAll();
+    }
+
+    // --------------------- Problem Retrieval ---------------------
+
+    /**
+     * Get total count of problems.
+     */
+    public long getProblemCount() {
+        return problemRepo.count();
+    }
+
+    /**
+     * Get problems paginated for anonymous users.
+     */
+    public List<ProblemResponseDTO> getProblems(int pageNo) {
+        List<Problem> problemList = (pageNo == 0)
+                ? problemRepo.getAllVisibleProblems()
+                : problemRepo.findAllByIsVisibleTrue(createPageRequest(pageNo)).getContent();
+
+        return ProblemConverter.problem_responseDTOConverter(problemList);
+    }
+
+    /**
+     * Get problems paginated for a specific user with user status.
+     */
+    public List<ProblemResponseDTO> getProblems(int pageNo, UUID userId) {
+        validateUser(userId);
+
+        List<Problem> problemList = (pageNo == 0)
+                ? problemRepo.getAllVisibleProblems()
+                : problemRepo.findAllByIsVisibleTrue(createPageRequest(pageNo)).getContent();
+
+        return convertWithUserStatus(problemList, userId);
+    }
+
+    // --------------------- Filter by Topic ---------------------
+
+    /**
+     * Get problems by topic name (for all users).
+     */
+    public List<ProblemResponseDTO> getProblemsTopicWise(String topicName, int pageNo) {
+        List<Problem> problemList = problemRepo.findByTopicName(normalize(topicName));
+        List<ProblemResponseDTO> responseList = ProblemConverter.problem_responseDTOConverter(problemList);
+        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+    }
+
+    /**
+     * Get problems by topic for a specific user.
+     */
+    public List<ProblemResponseDTO> getProblemsTopicWise(String topicName, UUID userId, int pageNo) {
+        validateUser(userId);
+        List<Problem> problemList = problemRepo.findByTopicName(normalize(topicName));
+        List<ProblemResponseDTO> responseList = convertWithUserStatus(problemList, userId);
+        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+    }
+
+    /**
+     * Get count of problems associated with a topic.
+     */
     public long getProblemsCountTopicWise(String topicName) {
         return problemRepo.countByTopicName(normalize(topicName));
     }
 
+
+
+    // --------------------- Filter by Company ---------------------
+
+    /**
+     * Get problems by company name (for all users).
+     */
+    public List<ProblemResponseDTO> getProblemsCompanyWise(String companyName, int pageNo) {
+        List<Problem> problemList = problemRepo.findByCompanyName(normalize(companyName));
+        List<ProblemResponseDTO> responseList = ProblemConverter.problem_responseDTOConverter(problemList);
+        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+    }
+
+    /**
+     * Get problems by company for a specific user.
+     */
+    public List<ProblemResponseDTO> getProblemsCompanyWise(String companyName, UUID userId, int pageNo) {
+        validateUser(userId);
+        List<Problem> problemList = problemRepo.findByCompanyName(normalize(companyName));
+        List<ProblemResponseDTO> responseList = convertWithUserStatus(problemList, userId);
+        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+    }
+
+    /**
+     * Get count of problems associated with a company.
+     */
     public long getProblemsCountCompanyWise(String companyName) {
         return problemRepo.countByCompanyName(normalize(companyName));
     }
 
-    public List<ProblemResponseDTO> searchProblem(String keyword) {
-        String[] keywords = keyword.trim().toLowerCase().split("[_\\s]+");
-        Set<Problem> problemSet = new HashSet<>();
+    // --------------------- Filter by Difficulty ---------------------
 
-        for (String key : keywords) {
-            problemSet.addAll(problemRepo.searchVisibleProblems(key));
-        }
-
-        return ProblemConverter.problem_responseDTOConverter(new ArrayList<>(problemSet));
+    /**
+     * Get problems by difficulty level (public view).
+     */
+    public List<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty, int pageNo) {
+        List<Problem> problemList = problemRepo.findProblemByDifficulty(difficulty.toString());
+        List<ProblemResponseDTO> responseList = ProblemConverter.problem_responseDTOConverter(problemList);
+        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
     }
 
+    /**
+     * Get problems by difficulty for a specific user.
+     */
+    public List<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty, UUID userId, int pageNo) {
+        validateUser(userId);
+        List<Problem> problemList = problemRepo.findProblemByDifficulty(difficulty.toString());
+        List<ProblemResponseDTO> responseList = convertWithUserStatus(problemList, userId);
+        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+    }
+
+    // --------------------- Filter by User Status ---------------------
+
+    /**
+     * Get problems filtered by user problem status (anonymous view).
+     */
+    public List<ProblemResponseDTO> getProblemsByStatus(int pageNo, UserProblemStatus status) {
+        List<Problem> problemList = problemRepo.getAllVisibleProblems();
+        List<ProblemResponseDTO> filtered = problemList.stream()
+                .map(ProblemConverter::problem_responseDTOConverter)
+                .filter(dto -> status == UserProblemStatus.UNATTEMPTED)
+                .collect(Collectors.toList());
+
+        return (pageNo == 0) ? filtered : paginateList(filtered, pageNo);
+    }
+
+    /**
+     * Get problems filtered by user problem status for specific user.
+     */
+    public List<ProblemResponseDTO> getProblemsByStatus(int pageNo, UserProblemStatus status, UUID userId) {
+        validateUser(userId);
+
+        List<Problem> problemList = problemRepo.getAllVisibleProblems();
+        List<ProblemResponseDTO> filtered = problemList.stream()
+                .map(p -> toResponseDTO(p, userId))
+                .filter(dto -> dto.getUserProblemStatus() == status)
+                .collect(Collectors.toList());
+
+        return (pageNo == 0) ? filtered : paginateList(filtered, pageNo);
+    }
+
+    // --------------------- Search ---------------------
+
+    /**
+     * Search visible problems by keyword.
+     */
     public List<ProblemResponseDTO> searchVisibleProblems(String keyword, int pageNo) {
-        int pageSize = 10;
-        pageNo--;
-        String[] keywords = keyword.trim().toLowerCase().split("[_\\s]+");
-        Set<Problem> problemSet = new HashSet<>();
+        List<Problem> problemList = (pageNo == 0)
+                ? problemRepo.searchProblemsWithoutPagination(normalize(keyword).toLowerCase())
+                : problemRepo.searchProblemsWithPagination(normalize(keyword).toLowerCase(), createPageRequest(pageNo)).getContent();
 
-        for (String key : keywords) {
-            List<Problem> results = problemRepo.searchVisibleProblems(key);
-            System.out.println("Key: " + key + " -> " + results.size() + " results");
-            problemSet.addAll(results);
-        }
-
-        List<Problem> problemList = new ArrayList<>(problemSet);
-        problemList.sort(Comparator.comparing(Problem::getProblemNo));
-
-        int start = pageNo * pageSize;
-        int end = Math.min(start + pageSize, problemList.size());
-
-        System.out.println("Total results: " + problemList.size() + ", Showing from: " + start + " to: " + end);
-
-        if (start >= problemList.size()) {
-            return Collections.emptyList();
-        }
-
-        List<Problem> pagedList = problemList.subList(start, end);
-        return ProblemConverter.problem_responseDTOConverter(pagedList);
+        return ProblemConverter.problem_responseDTOConverter(problemList);
     }
 
+    /**
+     * Search visible problems by keyword for specific user.
+     */
+    public List<ProblemResponseDTO> searchVisibleProblems(String keyword, int pageNo, UUID userId) {
+        validateUser(userId);
 
-    public void deleteProblem(UUID problemId) {
-        if (getProblem(problemId) == null) {
-            throw new NotFoundException("Problem with id-" + problemId + " not found!!!");
-        }
-        problemRepo.deleteById(problemId);
+        List<Problem> problemList = (pageNo == 0)
+                ? problemRepo.searchProblemsWithoutPagination(normalize(keyword).toLowerCase())
+                : problemRepo.searchProblemsWithPagination(normalize(keyword).toLowerCase(), createPageRequest(pageNo)).getContent();
+
+        return convertWithUserStatus(problemList, userId);
     }
 
-    public void deleteAllProblems() {
-        if (this.getProblemCount() == 0) {
-            throw new NotFoundException("There is not any problem present in the Database");
-        }
-        problemRepo.deleteAll();
-    }
+    // --------------------- Add Test Cases ---------------------
 
+    /**
+     * Add test cases to a given problem.
+     */
     public void addTestCases(List<TestCaseRequestDTO> testCaseRequestDTOList, UUID problemId) {
         Problem problem = this.getProblem(problemId);
-
-        if (problem == null) {
-            throw new NotFoundException("Problem with id-" + problemId + " not found!!!");
-        }
+        if (problem == null) throw new NotFoundException("Problem with id-" + problemId + " not found!!!");
 
         List<TestCase> testCases = TestCaseConverter.testCaseConverter(testCaseRequestDTOList, problem);
-
-        for (TestCase testCase : testCases) {
-            problem.getTestCasesList().add(testCase);
-        }
+        problem.getTestCasesList().addAll(testCases);
         problemRepo.save(problem);
     }
 
-    public List<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty) {
-        List<Problem>  problemList =  problemRepo.findProblemByDifficulty(difficulty.toString());
-        List<ProblemResponseDTO> responseDTOList = ProblemConverter.problem_responseDTOConverter(problemList);
+    // --------------------- Helper Methods ---------------------
 
-        return responseDTOList;
+    private PageRequest createPageRequest(int pageNo) {
+        return PageRequest.of(pageNo - 1, PAGE_SIZE, SORT_BY_PROBLEM_NO);
+    }
+
+    private void validateUser(UUID userId) {
+        if (userService.getUserById(userId) == null) {
+            throw new NotFoundException("User with id-" + userId + " not found!!!");
+        }
+    }
+
+    private List<ProblemResponseDTO> convertWithUserStatus(List<Problem> problems, UUID userId) {
+        return problems.stream().map(p -> toResponseDTO(p, userId)).collect(Collectors.toList());
+    }
+
+    private ProblemResponseDTO toResponseDTO(Problem problem, UUID userId) {
+        ProblemResponseDTO dto = ProblemConverter.problem_responseDTOConverter(problem);
+        dto.setUserProblemStatus(determineUserProblemStatus(userId, problem.getProblemId()));
+        return dto;
+    }
+
+    private UserProblemStatus determineUserProblemStatus(UUID userId, UUID problemId) {
+        List<Submission> submissions = submissionRepo.findAllByUserAndProblem(userId, problemId);
+        if (submissions.isEmpty()) return UserProblemStatus.UNATTEMPTED;
+        if (submissions.stream().anyMatch(s -> s.getSubmissionStatus() == SubmissionStatus.ACCEPTED)) {
+            return UserProblemStatus.SOLVED;
+        }
+        return UserProblemStatus.ATTEMPTED;
     }
 
     private String normalize(String s) {
-        return s.toUpperCase().trim().replaceAll("_", " ");
+        return s.toUpperCase().trim().replaceAll("%20", " ");
     }
 
+    private <T> List<T> paginateList(List<T> fullList, int pageNo) {
+        int fromIndex = (pageNo - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, fullList.size());
+        if (fromIndex >= fullList.size()) return new ArrayList<>();
+        return fullList.subList(fromIndex, toIndex);
+    }
 }

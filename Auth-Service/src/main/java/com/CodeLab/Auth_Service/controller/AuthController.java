@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/auth/token")
 public class AuthController {
@@ -18,7 +22,6 @@ public class AuthController {
 
     @GetMapping("/generate")
     public ResponseEntity<?> generateToken(@RequestParam String email, @RequestParam String password){
-
         String jwtToken = authService.generateToken(email,password);
 
         System.out.println(jwtToken);
@@ -56,7 +59,8 @@ public class AuthController {
     }
 
     @GetMapping("/validate-admin")
-    public ResponseEntity<?> validateAdminToken(@RequestHeader(value = "Authorization", required = false) String header) {
+    public ResponseEntity<?> validateAdminToken(@RequestHeader(value = "Authorization", required = false) String header) throws UnsupportedEncodingException {
+
         TokenValidationResponseDTO responseDTO = new TokenValidationResponseDTO();
 
         if (header == null || !header.startsWith("Bearer ")) {

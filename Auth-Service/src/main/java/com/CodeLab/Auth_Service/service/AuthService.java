@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Slf4j
@@ -29,6 +31,8 @@ public class AuthService {
     Long expirationTime = 604800000L;  //7 days
 
     public String generateToken(String email,String password){
+
+
         String credentials = email + ":" + password;
 
         String jwtToken = Jwts.builder().setSubject(credentials)
@@ -71,14 +75,13 @@ public class AuthService {
             }
 
             String email = parts[0];
+
             String password = parts[1];
 
             if(isAdmin){
 
                 AdminResponse response = dbService.callGetAdminByEmail(email);
-                System.out.println(response.getEmail());
-                System.out.println(response.getAdminId());
-                System.out.println(response.getPassword());
+
                 if (response == null) {
 //                    log.warn("Admin not found for email: {}", email);
                     return null;
@@ -91,9 +94,7 @@ public class AuthService {
             }
             else{
                 UserResponse response = dbService.callGetUserByEmail(email);
-                System.out.println(response.getEmail());
-                System.out.println(response.getUserId());
-                System.out.println(response.getPassword());
+
                 if (response == null) {
                     log.warn("User not found for email: {}", email);
                     return null;
