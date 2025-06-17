@@ -7,6 +7,7 @@ import com.CodeLab.DB_Service.model.Problem;
 import com.CodeLab.DB_Service.requestDTO.ProblemRequestDTO;
 import com.CodeLab.DB_Service.requestDTO.TestCaseRequestDTO;
 import com.CodeLab.DB_Service.responseDTO.GeneralResponseDTO;
+import com.CodeLab.DB_Service.responseDTO.PaginatedResponse;
 import com.CodeLab.DB_Service.responseDTO.ProblemAddedResponseDTO;
 import com.CodeLab.DB_Service.responseDTO.ProblemResponseDTO;
 import com.CodeLab.DB_Service.service.ProblemService;
@@ -39,12 +40,12 @@ public class ProblemController {
 
 
     @GetMapping("/get/{pageNo}")
-    public List<ProblemResponseDTO> getProblemsByPage(@PathVariable int pageNo){
+    public PaginatedResponse<ProblemResponseDTO> getProblemsByPage(@PathVariable int pageNo){
         return problemService.getProblems(pageNo);
     }
 
     @GetMapping("/get-with-status/{pageNo}")
-    public List<ProblemResponseDTO> getProblemsByPage(@PathVariable int pageNo,@RequestParam UUID userId){
+    public PaginatedResponse<ProblemResponseDTO> getProblemsByPage(@PathVariable int pageNo, @RequestParam UUID userId){
         return problemService.getProblems(pageNo,userId);
     }
 
@@ -59,22 +60,22 @@ public class ProblemController {
     }
 
     @GetMapping("/get-by-topic/{pageNo}")
-    public List<ProblemResponseDTO> getProblemsTopicWise(@PathVariable int pageNo,@RequestParam String topicName){
+    public PaginatedResponse<ProblemResponseDTO> getProblemsTopicWise(@PathVariable int pageNo,@RequestParam String topicName){
         return problemService.getProblemsTopicWise(topicName,pageNo);
     }
 
     @GetMapping("/get-by-topic-with-status/{pageNo}")
-    public List<ProblemResponseDTO> getProblemsTopicWise(@PathVariable int pageNo,@RequestParam String topicName,@RequestParam UUID userId){
+    public PaginatedResponse<ProblemResponseDTO> getProblemsTopicWise(@PathVariable int pageNo,@RequestParam String topicName,@RequestParam UUID userId){
         return problemService.getProblemsTopicWise(topicName,userId,pageNo);
     }
 
     @GetMapping("/get-by-company/{pageNo}")
-    public List<ProblemResponseDTO> getProblemsCompanyWise(@PathVariable int pageNo,@RequestParam String companyName){
+    public PaginatedResponse<ProblemResponseDTO> getProblemsCompanyWise(@PathVariable int pageNo,@RequestParam String companyName){
         return problemService.getProblemsCompanyWise(companyName,pageNo);
     }
 
     @GetMapping("/get-by-company-with-status/{pageNo}")
-    public List<ProblemResponseDTO> getProblemsCompanyWise(@PathVariable int pageNo,@RequestParam String companyName,@RequestParam UUID userId){
+    public PaginatedResponse<ProblemResponseDTO> getProblemsCompanyWise(@PathVariable int pageNo,@RequestParam String companyName,@RequestParam UUID userId){
         return problemService.getProblemsCompanyWise(companyName,userId,pageNo);
     }
 
@@ -91,13 +92,13 @@ public class ProblemController {
 
 
     @GetMapping("/search/{pageNo}")
-    public List<ProblemResponseDTO> searchProblem(@PathVariable int pageNo,@RequestParam String keyword){
+    public PaginatedResponse<ProblemResponseDTO> searchProblem(@PathVariable int pageNo,@RequestParam String keyword){
         System.out.println("search by page");
         return problemService.searchVisibleProblems(keyword,pageNo);
     }
 
     @GetMapping("/search-with-status/{pageNo}")
-    public List<ProblemResponseDTO> searchProblem(@PathVariable int pageNo,@RequestParam String keyword,@RequestParam UUID userId){
+    public PaginatedResponse<ProblemResponseDTO> searchProblem(@PathVariable int pageNo,@RequestParam String keyword,@RequestParam UUID userId){
         System.out.println("search by page");
         return problemService.searchVisibleProblems(keyword,pageNo,userId);
     }
@@ -147,22 +148,22 @@ public class ProblemController {
     }
 
     @GetMapping("/get-by-difficulty/{pageNo}")
-    public List<ProblemResponseDTO> getProblemByDifficulty(@PathVariable int pageNo,@RequestParam Difficulty difficulty){
+    public PaginatedResponse<ProblemResponseDTO> getProblemByDifficulty(@PathVariable int pageNo,@RequestParam Difficulty difficulty){
         return problemService.getProblemByDifficulty(difficulty,pageNo);
     }
 
     @GetMapping("/get-by-difficulty-with-status/{pageNo}")
-    public List<ProblemResponseDTO> getProblemByDifficulty(@PathVariable int pageNo,@RequestParam Difficulty difficulty,@RequestParam UUID userId){
+    public PaginatedResponse<ProblemResponseDTO> getProblemByDifficulty(@PathVariable int pageNo,@RequestParam Difficulty difficulty,@RequestParam UUID userId){
         return problemService.getProblemByDifficulty(difficulty,userId,pageNo);
     }
 
     @GetMapping("/get-by-status/{pageNo}")
-    public List<ProblemResponseDTO> getProblemByStatus(@PathVariable int pageNo,@RequestParam UserProblemStatus status){
+    public PaginatedResponse<ProblemResponseDTO> getProblemByStatus(@PathVariable int pageNo,@RequestParam UserProblemStatus status){
         return problemService.getProblemsByStatus(pageNo,status);
     }
 
     @GetMapping("/get-by-status-with-status/{pageNo}")
-    public List<ProblemResponseDTO> getProblemByStatus(@PathVariable int pageNo,@RequestParam UserProblemStatus status, @RequestParam UUID userId){
+    public PaginatedResponse<ProblemResponseDTO> getProblemByStatus(@PathVariable int pageNo,@RequestParam UserProblemStatus status, @RequestParam UUID userId){
         return problemService.getProblemsByStatus(pageNo,status,userId);
     }
 }

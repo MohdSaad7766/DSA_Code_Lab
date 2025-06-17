@@ -17,6 +17,7 @@ import com.CodeLab.DB_Service.requestdto_converter.CompanyConverter;
 import com.CodeLab.DB_Service.requestdto_converter.ProblemConverter;
 import com.CodeLab.DB_Service.requestdto_converter.TestCaseConverter;
 import com.CodeLab.DB_Service.requestdto_converter.TopicConverter;
+import com.CodeLab.DB_Service.responseDTO.PaginatedResponse;
 import com.CodeLab.DB_Service.responseDTO.ProblemResponseDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 @Service
 public class ProblemService {
 
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 3;
     private static final Sort SORT_BY_PROBLEM_NO = Sort.by("problemNo").ascending();
 
     @Autowired
@@ -114,47 +115,84 @@ public class ProblemService {
     /**
      * Get problems paginated for anonymous users.
      */
-    public List<ProblemResponseDTO> getProblems(int pageNo) {
-        List<Problem> problemList = (pageNo == 0)
-                ? problemRepo.getAllVisibleProblems()
-                : problemRepo.findAllByIsVisibleTrue(createPageRequest(pageNo)).getContent();
+    public PaginatedResponse<ProblemResponseDTO> getProblems(int pageNo) {
+        // Handle first page (custom logic for pageNo == 0)
+        if (pageNo == 0) {
+            List<Problem> problemList = problemRepo.getAllVisibleProblems();
+            List<ProblemResponseDTO> content = ProblemConverter.problem_responseDTOConverter(problemList);
 
-        return ProblemConverter.problem_responseDTOConverter(problemList);
+            return new PaginatedResponse<>(
+                    content,
+                    1,
+                    1,
+                    content.size()
+            );
+        }
+
+        // Handle paginated response from DB
+        Page<Problem> problemPage = problemRepo.findAllByIsVisibleTrue(createPageRequest(pageNo));
+        List<ProblemResponseDTO> content = ProblemConverter.problem_responseDTOConverter(problemPage.getContent());
+
+        return new PaginatedResponse<>(
+                content,
+                pageNo,
+                problemPage.getTotalPages(),
+                problemPage.getTotalElements()
+        );
     }
+
 
     /**
      * Get problems paginated for a specific user with user status.
      */
-    public List<ProblemResponseDTO> getProblems(int pageNo, UUID userId) {
+    public PaginatedResponse<ProblemResponseDTO> getProblems(int pageNo, UUID userId) {
         validateUser(userId);
 
-        List<Problem> problemList = (pageNo == 0)
-                ? problemRepo.getAllVisibleProblems()
-                : problemRepo.findAllByIsVisibleTrue(createPageRequest(pageNo)).getContent();
+        if (pageNo == 0) {
+            List<Problem> problemList = problemRepo.getAllVisibleProblems();
+            List<ProblemResponseDTO> content = convertWithUserStatus(problemList, userId);
 
-        return convertWithUserStatus(problemList, userId);
+            return new PaginatedResponse<>(
+                    content,
+                    1,
+                    1,
+                    content.size()
+            );
+        }
+
+        Page<Problem> problemPage = problemRepo.findAllByIsVisibleTrue(createPageRequest(pageNo));
+        List<ProblemResponseDTO> content = convertWithUserStatus(problemPage.getContent(), userId);
+
+        return new PaginatedResponse<>(
+                content,
+                pageNo,
+                problemPage.getTotalPages(),
+                problemPage.getTotalElements()
+        );
     }
+
 
     // --------------------- Filter by Topic ---------------------
 
     /**
      * Get problems by topic name (for all users).
      */
-    public List<ProblemResponseDTO> getProblemsTopicWise(String topicName, int pageNo) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemsTopicWise(String topicName, int pageNo) {
         List<Problem> problemList = problemRepo.findByTopicName(normalize(topicName));
         List<ProblemResponseDTO> responseList = ProblemConverter.problem_responseDTOConverter(problemList);
-        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+        return toPaginatedResponse(responseList, pageNo);
     }
 
     /**
      * Get problems by topic for a specific user.
      */
-    public List<ProblemResponseDTO> getProblemsTopicWise(String topicName, UUID userId, int pageNo) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemsTopicWise(String topicName, UUID userId, int pageNo) {
         validateUser(userId);
         List<Problem> problemList = problemRepo.findByTopicName(normalize(topicName));
         List<ProblemResponseDTO> responseList = convertWithUserStatus(problemList, userId);
-        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+        return toPaginatedResponse(responseList, pageNo);
     }
+
 
     /**
      * Get count of problems associated with a topic.
@@ -170,20 +208,21 @@ public class ProblemService {
     /**
      * Get problems by company name (for all users).
      */
-    public List<ProblemResponseDTO> getProblemsCompanyWise(String companyName, int pageNo) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemsCompanyWise(String companyName, int pageNo) {
         List<Problem> problemList = problemRepo.findByCompanyName(normalize(companyName));
         List<ProblemResponseDTO> responseList = ProblemConverter.problem_responseDTOConverter(problemList);
-        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+        return toPaginatedResponse(responseList, pageNo);
     }
+
 
     /**
      * Get problems by company for a specific user.
      */
-    public List<ProblemResponseDTO> getProblemsCompanyWise(String companyName, UUID userId, int pageNo) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemsCompanyWise(String companyName, UUID userId, int pageNo) {
         validateUser(userId);
         List<Problem> problemList = problemRepo.findByCompanyName(normalize(companyName));
         List<ProblemResponseDTO> responseList = convertWithUserStatus(problemList, userId);
-        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+        return toPaginatedResponse(responseList, pageNo);
     }
 
     /**
@@ -198,50 +237,50 @@ public class ProblemService {
     /**
      * Get problems by difficulty level (public view).
      */
-    public List<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty, int pageNo) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty, int pageNo) {
         List<Problem> problemList = problemRepo.findProblemByDifficulty(difficulty.toString());
         List<ProblemResponseDTO> responseList = ProblemConverter.problem_responseDTOConverter(problemList);
-        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+        return toPaginatedResponse(responseList, pageNo);
     }
 
     /**
      * Get problems by difficulty for a specific user.
      */
-    public List<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty, UUID userId, int pageNo) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemByDifficulty(Difficulty difficulty, UUID userId, int pageNo) {
         validateUser(userId);
         List<Problem> problemList = problemRepo.findProblemByDifficulty(difficulty.toString());
         List<ProblemResponseDTO> responseList = convertWithUserStatus(problemList, userId);
-        return (pageNo == 0) ? responseList : paginateList(responseList, pageNo);
+        return toPaginatedResponse(responseList, pageNo);
     }
+
 
     // --------------------- Filter by User Status ---------------------
 
     /**
      * Get problems filtered by user problem status (anonymous view).
      */
-    public List<ProblemResponseDTO> getProblemsByStatus(int pageNo, UserProblemStatus status) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemsByStatus(int pageNo, UserProblemStatus status) {
         List<Problem> problemList = problemRepo.getAllVisibleProblems();
         List<ProblemResponseDTO> filtered = problemList.stream()
                 .map(ProblemConverter::problem_responseDTOConverter)
                 .filter(dto -> status == UserProblemStatus.UNATTEMPTED)
                 .collect(Collectors.toList());
 
-        return (pageNo == 0) ? filtered : paginateList(filtered, pageNo);
+        return toPaginatedResponse(filtered, pageNo);
     }
 
     /**
      * Get problems filtered by user problem status for specific user.
      */
-    public List<ProblemResponseDTO> getProblemsByStatus(int pageNo, UserProblemStatus status, UUID userId) {
+    public PaginatedResponse<ProblemResponseDTO> getProblemsByStatus(int pageNo, UserProblemStatus status, UUID userId) {
         validateUser(userId);
-
         List<Problem> problemList = problemRepo.getAllVisibleProblems();
         List<ProblemResponseDTO> filtered = problemList.stream()
                 .map(p -> toResponseDTO(p, userId))
                 .filter(dto -> dto.getUserProblemStatus() == status)
                 .collect(Collectors.toList());
 
-        return (pageNo == 0) ? filtered : paginateList(filtered, pageNo);
+        return toPaginatedResponse(filtered, pageNo);
     }
 
     // --------------------- Search ---------------------
@@ -249,25 +288,55 @@ public class ProblemService {
     /**
      * Search visible problems by keyword.
      */
-    public List<ProblemResponseDTO> searchVisibleProblems(String keyword, int pageNo) {
-        List<Problem> problemList = (pageNo == 0)
-                ? problemRepo.searchProblemsWithoutPagination(normalize(keyword).toLowerCase())
-                : problemRepo.searchProblemsWithPagination(normalize(keyword).toLowerCase(), createPageRequest(pageNo)).getContent();
+    public PaginatedResponse<ProblemResponseDTO> searchVisibleProblems(String keyword, int pageNo) {
+        String normalizedKeyword = normalize(keyword).toLowerCase();
 
-        return ProblemConverter.problem_responseDTOConverter(problemList);
+        if (pageNo == 0) {
+            List<Problem> problemList = problemRepo.searchProblemsWithoutPagination(normalizedKeyword);
+            List<ProblemResponseDTO> responseList = ProblemConverter.problem_responseDTOConverter(problemList);
+            return new PaginatedResponse<>(
+                    responseList,
+                    1,
+                    1,
+                    responseList.size()
+            );
+        }
+
+        Page<Problem> problemPage = problemRepo.searchProblemsWithPagination(normalizedKeyword, createPageRequest(pageNo));
+        List<ProblemResponseDTO> content = ProblemConverter.problem_responseDTOConverter(problemPage.getContent());
+
+        return new PaginatedResponse<>(
+                content,
+                pageNo,
+                problemPage.getTotalPages(),
+                problemPage.getTotalElements()
+        );
     }
 
-    /**
-     * Search visible problems by keyword for specific user.
-     */
-    public List<ProblemResponseDTO> searchVisibleProblems(String keyword, int pageNo, UUID userId) {
+    public PaginatedResponse<ProblemResponseDTO> searchVisibleProblems(String keyword, int pageNo, UUID userId) {
         validateUser(userId);
+        String normalizedKeyword = normalize(keyword).toLowerCase();
 
-        List<Problem> problemList = (pageNo == 0)
-                ? problemRepo.searchProblemsWithoutPagination(normalize(keyword).toLowerCase())
-                : problemRepo.searchProblemsWithPagination(normalize(keyword).toLowerCase(), createPageRequest(pageNo)).getContent();
+        if (pageNo == 0) {
+            List<Problem> problemList = problemRepo.searchProblemsWithoutPagination(normalizedKeyword);
+            List<ProblemResponseDTO> responseList = convertWithUserStatus(problemList, userId);
+            return new PaginatedResponse<>(
+                    responseList,
+                    1,
+                    1,
+                    responseList.size()
+            );
+        }
 
-        return convertWithUserStatus(problemList, userId);
+        Page<Problem> problemPage = problemRepo.searchProblemsWithPagination(normalizedKeyword, createPageRequest(pageNo));
+        List<ProblemResponseDTO> content = convertWithUserStatus(problemPage.getContent(), userId);
+
+        return new PaginatedResponse<>(
+                content,
+                pageNo,
+                problemPage.getTotalPages(),
+                problemPage.getTotalElements()
+        );
     }
 
     // --------------------- Add Test Cases ---------------------
@@ -324,5 +393,30 @@ public class ProblemService {
         int toIndex = Math.min(fromIndex + PAGE_SIZE, fullList.size());
         if (fromIndex >= fullList.size()) return new ArrayList<>();
         return fullList.subList(fromIndex, toIndex);
+    }
+
+    private <T> PaginatedResponse<T> toPaginatedResponse(List<T> fullList, int pageNo) {
+        if (pageNo == 0) {
+            return new PaginatedResponse<>(
+                    fullList,
+                    1,
+                    1,
+                    fullList.size()
+            );
+        }
+
+        int totalElements = fullList.size();
+        int totalPages = (int) Math.ceil((double) totalElements / PAGE_SIZE);
+        int fromIndex = (pageNo - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, totalElements);
+
+        List<T> pageContent = (fromIndex >= totalElements) ? new ArrayList<>() : fullList.subList(fromIndex, toIndex);
+
+        return new PaginatedResponse<>(
+                pageContent,
+                pageNo,
+                totalPages,
+                totalElements
+        );
     }
 }

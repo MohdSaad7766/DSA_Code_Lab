@@ -6,6 +6,7 @@ import com.CodeLab.Central_Service.integration.DBService;
 import com.CodeLab.Central_Service.model.Problem;
 import com.CodeLab.Central_Service.requestDTO.ProblemRequestDTO;
 import com.CodeLab.Central_Service.responseDTO.GeneralResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.PaginatedResponse;
 import com.CodeLab.Central_Service.responseDTO.ProblemAddedResponseDTO;
 import com.CodeLab.Central_Service.responseDTO.ProblemResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +24,11 @@ public class ProblemService {
         return dbService.callAddProblem(problemRequestDTO);
     }
 
-    public List<ProblemResponseDTO> getProblemsByPage(int pageNo) {
+    public PaginatedResponse<?> getProblemsByPage(int pageNo) {
         return dbService.callGetProblemsByPage(pageNo);
     }
 
-    public List<ProblemResponseDTO> getProblemsByPage(int pageNo, UUID userId) {
+    public PaginatedResponse<?> getProblemsByPage(int pageNo, UUID userId) {
         return dbService.callGetProblemsByPage(pageNo, userId);
     }
 
@@ -39,27 +40,27 @@ public class ProblemService {
         return dbService.callGetProblemForSystem(problemId);
     }
 
-    public List<ProblemResponseDTO> getProblemsTopicWise(int pageNo,String topicName) {
+    public PaginatedResponse<?> getProblemsTopicWise(int pageNo,String topicName) {
         return dbService.callGetProblemsTopicWise(pageNo,topicName.trim());
     }
 
-    public List<ProblemResponseDTO> getProblemsTopicWise(int pageNo,String topicName, UUID userId) {
+    public PaginatedResponse<?> getProblemsTopicWise(int pageNo,String topicName, UUID userId) {
         return dbService.callGetProblemsTopicWise(pageNo,topicName.trim(), userId);
     }
 
-    public List<ProblemResponseDTO> getProblemsCompanyWise(int pageNo,String companyName) {
+    public PaginatedResponse<?> getProblemsCompanyWise(int pageNo,String companyName) {
         return dbService.callGetProblemsCompanyWise(pageNo,companyName.trim());
     }
 
-    public List<ProblemResponseDTO> getProblemsCompanyWise(int pageNo,String companyName, UUID userId) {
+    public PaginatedResponse<?> getProblemsCompanyWise(int pageNo,String companyName, UUID userId) {
         return dbService.callGetProblemsCompanyWise(pageNo,companyName.trim(), userId);
     }
 
-    public List<ProblemResponseDTO> getProblemsStatusWise(int pageNo,UserProblemStatus status, UUID userId) {
+    public PaginatedResponse<?> getProblemsStatusWise(int pageNo,UserProblemStatus status, UUID userId) {
         return dbService.callGetProblemsStatusWise(pageNo,status,userId);
     }
 
-    public List<ProblemResponseDTO> getProblemsStatusWise(int pageNo,UserProblemStatus status) {
+    public PaginatedResponse<?> getProblemsStatusWise(int pageNo,UserProblemStatus status) {
         return dbService.callGetProblemsStatusWise(pageNo,status);
     }
 
@@ -72,11 +73,11 @@ public class ProblemService {
     }
 
 
-    public List<ProblemResponseDTO> searchProblem(String keyword, int pageNo) {
+    public PaginatedResponse<?> searchProblem(String keyword, int pageNo) {
         return dbService.callSearchProblem(keyword.trim(), pageNo);
     }
 
-    public List<ProblemResponseDTO> searchProblem(String keyword, int pageNo, UUID userId) {
+    public PaginatedResponse<?> searchProblem(String keyword, int pageNo, UUID userId) {
         return dbService.callSearchProblem(keyword.trim(), pageNo, userId);
     }
 
@@ -88,11 +89,11 @@ public class ProblemService {
         return dbService.callDeleteAll();
     }
 
-    public List<ProblemResponseDTO> getProblemByDifficulty(int pageNo,Difficulty difficulty) {
+    public PaginatedResponse<?> getProblemByDifficulty(int pageNo,Difficulty difficulty) {
         return dbService.callGetProblemByDifficulty(pageNo,difficulty);
     }
 
-    public List<ProblemResponseDTO> getProblemByDifficulty(int pageNo,Difficulty difficulty, UUID userId) {
+    public PaginatedResponse<?> getProblemByDifficulty(int pageNo,Difficulty difficulty, UUID userId) {
         return dbService.callGetProblemByDifficulty(pageNo,difficulty, userId);
     }
 }
