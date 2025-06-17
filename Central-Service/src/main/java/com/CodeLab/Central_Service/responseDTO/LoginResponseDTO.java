@@ -4,9 +4,11 @@ import lombok.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 public class LoginResponseDTO {
     private String token;
+    private boolean isValid;
+
 }

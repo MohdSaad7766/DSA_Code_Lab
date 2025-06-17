@@ -49,8 +49,11 @@ public class UserController {
 
     @PostMapping("/login")
     private ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO){
-        LoginResponseDTO responseDTO = authenticationService.generateToken(requestDTO);
+        LoginResponseDTO responseDTO = authenticationService.generateToken(requestDTO,false);
+        if(responseDTO.isValid() == false){
+            return new ResponseEntity<>(responseDTO,HttpStatus.UNAUTHORIZED);
 
-        return ResponseEntity.ok(responseDTO);
+        }
+        return new ResponseEntity<>(responseDTO,HttpStatus.OK);
     }
 }

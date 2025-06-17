@@ -9,4 +9,6 @@ import lombok.*;
 @ToString
 public class LoginResponseDTO {
     private String token;
+    private boolean isValid;
+
 }

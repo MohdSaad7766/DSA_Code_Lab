@@ -21,15 +21,26 @@ public class AuthController {
     AuthService authService;
 
     @GetMapping("/generate")
-    public ResponseEntity<?> generateToken(@RequestParam String email, @RequestParam String password){
+    public ResponseEntity<?> generateToken(@RequestParam String email, @RequestParam String password,@RequestParam boolean isAdmin){
         String jwtToken = authService.generateToken(email,password);
 
-        System.out.println(jwtToken);
+        Pair pair = authService.validateToken(jwtToken,isAdmin);
+
+        LoginResponseDTO responseDTO = new LoginResponseDTO();
 
 
-        LoginResponseDTO responseDTO = new LoginResponseDTO(jwtToken);
+        if (pair == null) {
+            responseDTO.setValid(false);
+            responseDTO.setToken(null);
+            System.out.println("Invalid Credentials");
+            return new ResponseEntity<>(responseDTO,HttpStatus.OK);
+        }
 
-        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
+        responseDTO.setValid(true);
+        responseDTO.setToken(jwtToken);
+        System.out.println("Valid Credentials");
+
+        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }
 
     @GetMapping("/validate-user")

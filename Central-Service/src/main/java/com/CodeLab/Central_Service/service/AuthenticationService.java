@@ -16,12 +16,12 @@ public class AuthenticationService {
     @Autowired
     AuthService authService;
 
-    public LoginResponseDTO generateToken(LoginRequestDTO requestDTO){
+    public LoginResponseDTO generateToken(LoginRequestDTO requestDTO,boolean isAdmin){
         requestDTO.setEmail(requestDTO.getEmail().trim());
 //        String encodedPass = passwordEncoder.encode();
         requestDTO.setPassword(requestDTO.getPassword().trim());
 
-        return authService.callGenerateToken(requestDTO);
+        return authService.callGenerateToken(requestDTO,isAdmin);
 
     }
 

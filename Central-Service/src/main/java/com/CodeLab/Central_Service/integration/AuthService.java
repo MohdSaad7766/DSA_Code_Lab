@@ -26,11 +26,12 @@ public class AuthService extends RestAPI{
     @Autowired
     RestTemplate restTemplate;
 
-    public LoginResponseDTO callGenerateToken(LoginRequestDTO requestDTO){
+    public LoginResponseDTO callGenerateToken(LoginRequestDTO requestDTO,boolean isAdmin){
         String endpoint = "/token/generate";
         HashMap<String,String> map = new HashMap<>();
         map.put("email",requestDTO.getEmail());
         map.put("password",requestDTO.getPassword());
+        map.put("isAdmin",isAdmin+"");
 
         Object object = this.makeGetCall(baseURL,endpoint,map);
         if (object == null){

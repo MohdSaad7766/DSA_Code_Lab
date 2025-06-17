@@ -46,9 +46,13 @@ public class AdminController {
 
     @PostMapping("/login")
     private ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO){
-        LoginResponseDTO responseDTO = authenticationService.generateToken(requestDTO);
+        LoginResponseDTO responseDTO = authenticationService.generateToken(requestDTO,true);
 
-        return ResponseEntity.ok(responseDTO);
+        if(responseDTO.isValid() == false){
+            return new ResponseEntity<>(responseDTO,HttpStatus.UNAUTHORIZED);
+
+        }
+        return new ResponseEntity<>(responseDTO,HttpStatus.OK);
     }
 
     @PostMapping("/validate-token")
