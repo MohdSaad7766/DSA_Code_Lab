@@ -1,5 +1,6 @@
-package com.CodeLab.Central_Service.responseDTO;
+package com.CodeLab.Auth_Service.responseDTO;
 
+import com.CodeLab.Auth_Service.model.Admin;
 import lombok.*;
 
 import java.util.UUID;
@@ -9,12 +10,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class LoginResponseDTO {
+public class AdminLoginResponseDTO {
     private String token;
     private boolean isValid;
-    private Object object;
-    private UUID userId;
-
+    private Admin profile;
 }
-
-

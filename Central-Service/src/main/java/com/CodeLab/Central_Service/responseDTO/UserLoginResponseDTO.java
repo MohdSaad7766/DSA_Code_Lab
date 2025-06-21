@@ -1,20 +1,15 @@
 package com.CodeLab.Central_Service.responseDTO;
 
+import com.CodeLab.Central_Service.model.User;
 import lombok.*;
-
-import java.util.UUID;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class LoginResponseDTO {
+public class UserLoginResponseDTO {
     private String token;
     private boolean isValid;
-    private Object object;
-    private UUID userId;
-
+    private User profile;
 }
-
-

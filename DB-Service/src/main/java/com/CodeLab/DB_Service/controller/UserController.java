@@ -1,5 +1,6 @@
 package com.CodeLab.DB_Service.controller;
 
+import com.CodeLab.DB_Service.enums.Language;
 import com.CodeLab.DB_Service.model.Submission;
 import com.CodeLab.DB_Service.model.User;
 import com.CodeLab.DB_Service.requestDTO.UserRequestDTO;
@@ -49,16 +50,9 @@ public class UserController {
 
 
     @GetMapping("/get-by-email")
-    public UserResponse getUserByEmail(@RequestParam String email){
+    public User getUserByEmail(@RequestParam String email){
         User user =  userService.getUserByEmail(email);
-        if(user == null){
-            return null;
-        }
-        UserResponse response = new UserResponse();
-        response.setUserId(user.getUserId());
-        response.setEmail(user.getEmail());
-        response.setPassword(user.getPassword());
-        return response;
+        return user;
     }
 
     @PatchMapping("/change-password")
@@ -75,6 +69,11 @@ public class UserController {
             responseDTO.setMessage("Password Not Changed.");
             return new ResponseEntity<>(responseDTO,HttpStatus.NOT_FOUND);
         }
+    }
+
+    @PutMapping("/update-preferred-language")
+    private User updatePreferredLanguage(@RequestParam Language language,@RequestParam UUID userId){
+        return userService.updatePreferredLanguage(userId,language);
     }
 
 

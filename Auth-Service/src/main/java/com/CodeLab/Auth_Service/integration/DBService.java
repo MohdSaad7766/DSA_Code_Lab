@@ -1,7 +1,9 @@
 package com.CodeLab.Auth_Service.integration;
 
-import com.CodeLab.Auth_Service.requestDTO.AdminResponse;
-import com.CodeLab.Auth_Service.requestDTO.UserResponse;
+import com.CodeLab.Auth_Service.model.Admin;
+import com.CodeLab.Auth_Service.model.User;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +21,10 @@ public class DBService extends RestAPI {
     @Autowired
     ModelMapper modelMapper;
 
-    public UserResponse callGetUserByEmail(String email){
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    public User callGetUserByEmail(String email){
         String endpoint = "/user/get-by-email";
         HashMap<String,String> map = new HashMap<>();
         map.put("email",email);
@@ -29,10 +34,10 @@ public class DBService extends RestAPI {
             return null;
         }
 
-        return modelMapper.map(object,UserResponse.class);
+        return objectMapper.convertValue(object, User.class);
     }
 
-    public AdminResponse callGetAdminByEmail(String email){
+    public Admin callGetAdminByEmail(String email){
         String endpoint = "/admin/get-by-email";
         HashMap<String,String> map = new HashMap<>();
         map.put("email",email);
@@ -42,6 +47,6 @@ public class DBService extends RestAPI {
             return null;
         }
 
-        return modelMapper.map(object,AdminResponse.class);
+        return objectMapper.convertValue(object,Admin.class);
     }
 }

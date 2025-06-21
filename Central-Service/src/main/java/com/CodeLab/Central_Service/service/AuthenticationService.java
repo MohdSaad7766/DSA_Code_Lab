@@ -2,8 +2,9 @@ package com.CodeLab.Central_Service.service;
 
 import com.CodeLab.Central_Service.integration.AuthService;
 import com.CodeLab.Central_Service.requestDTO.LoginRequestDTO;
-import com.CodeLab.Central_Service.responseDTO.LoginResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.AdminLoginResponseDTO;
 import com.CodeLab.Central_Service.responseDTO.TokenValidationResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.UserLoginResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,12 +17,21 @@ public class AuthenticationService {
     @Autowired
     AuthService authService;
 
-    public LoginResponseDTO generateToken(LoginRequestDTO requestDTO,boolean isAdmin){
+    public UserLoginResponseDTO generateUserToken(LoginRequestDTO requestDTO){
         requestDTO.setEmail(requestDTO.getEmail().trim());
 //        String encodedPass = passwordEncoder.encode();
         requestDTO.setPassword(requestDTO.getPassword().trim());
 
-        return authService.callGenerateToken(requestDTO,isAdmin);
+        return authService.callGenerateUserToken(requestDTO);
+
+    }
+
+    public AdminLoginResponseDTO generateAdminToken(LoginRequestDTO requestDTO){
+        requestDTO.setEmail(requestDTO.getEmail().trim());
+//        String encodedPass = passwordEncoder.encode();
+        requestDTO.setPassword(requestDTO.getPassword().trim());
+
+        return authService.callGenerateAdminToken(requestDTO);
 
     }
 

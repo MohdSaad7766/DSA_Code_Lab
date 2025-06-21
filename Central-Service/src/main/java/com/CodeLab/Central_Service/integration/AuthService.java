@@ -1,8 +1,10 @@
 package com.CodeLab.Central_Service.integration;
 
 import com.CodeLab.Central_Service.requestDTO.LoginRequestDTO;
-import com.CodeLab.Central_Service.responseDTO.LoginResponseDTO;
 import com.CodeLab.Central_Service.responseDTO.TokenValidationResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.AdminLoginResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.UserLoginResponseDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,19 +28,37 @@ public class AuthService extends RestAPI{
     @Autowired
     RestTemplate restTemplate;
 
-    public LoginResponseDTO callGenerateToken(LoginRequestDTO requestDTO,boolean isAdmin){
-        String endpoint = "/token/generate";
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    public UserLoginResponseDTO callGenerateUserToken(LoginRequestDTO requestDTO){
+        String endpoint = "/token/user/generate";
         HashMap<String,String> map = new HashMap<>();
         map.put("email",requestDTO.getEmail());
         map.put("password",requestDTO.getPassword());
-        map.put("isAdmin",isAdmin+"");
+
 
         Object object = this.makeGetCall(baseURL,endpoint,map);
         if (object == null){
             return null;
         }
 
-        return modelMapper.map(object,LoginResponseDTO.class);
+        return objectMapper.convertValue(object,UserLoginResponseDTO.class);
+    }
+
+    public AdminLoginResponseDTO callGenerateAdminToken(LoginRequestDTO requestDTO){
+        String endpoint = "/token/admin/generate";
+        HashMap<String,String> map = new HashMap<>();
+        map.put("email",requestDTO.getEmail());
+        map.put("password",requestDTO.getPassword());
+
+
+        Object object = this.makeGetCall(baseURL,endpoint,map);
+        if (object == null){
+            return null;
+        }
+
+        return objectMapper.convertValue(object,AdminLoginResponseDTO.class);
     }
 
     public TokenValidationResponseDTO callValidateUserToken(String token) {
@@ -60,7 +80,7 @@ public class AuthService extends RestAPI{
                 Object.class
         );
 
-        return modelMapper.map(response.getBody(), TokenValidationResponseDTO.class);
+        return objectMapper.convertValue(response.getBody(), TokenValidationResponseDTO.class);
     }
 
     public TokenValidationResponseDTO callValidateAdminToken(String token) {
@@ -82,7 +102,7 @@ public class AuthService extends RestAPI{
                 Object.class
         );
 
-        return modelMapper.map(response.getBody(), TokenValidationResponseDTO.class);
+        return objectMapper.convertValue(response.getBody(), TokenValidationResponseDTO.class);
     }
 
 }

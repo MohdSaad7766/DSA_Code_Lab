@@ -1,4 +1,5 @@
-package com.CodeLab.Auth_Service.requestDTO;
+package com.CodeLab.Auth_Service.model;
+
 
 import lombok.*;
 
@@ -11,7 +12,7 @@ import java.util.UUID;
 @ToString
 
 
-public class AdminResponse {
+public class Admin {
 
     private UUID adminId;
 
@@ -23,4 +24,3 @@ public class AdminResponse {
 
     private String password;
 }
-

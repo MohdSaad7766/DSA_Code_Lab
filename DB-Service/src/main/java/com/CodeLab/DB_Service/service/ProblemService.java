@@ -65,6 +65,19 @@ public class ProblemService {
         return (problem == null) ? null : ProblemConverter.problem_responseDTOConverter(problem);
     }
 
+    public ProblemResponseDTO getProblemForUser(UUID problemId, UUID userId) {
+        Problem problem = problemRepo.findById(problemId).orElse(null);
+        if (problem == null) return null;
+
+        // Convert problem to response DTO
+        ProblemResponseDTO dto = ProblemConverter.problem_responseDTOConverter(problem);
+
+        // Set user problem status
+        UserProblemStatus status = determineUserProblemStatus(userId, problemId);
+        dto.setUserProblemStatus(status);
+
+        return dto;
+    }
     /**
      * Add a new problem with specified visibility.
      */

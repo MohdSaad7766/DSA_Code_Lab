@@ -1,9 +1,9 @@
 package com.CodeLab.Auth_Service.service;
 
 import com.CodeLab.Auth_Service.integration.DBService;
+import com.CodeLab.Auth_Service.model.Admin;
 import com.CodeLab.Auth_Service.model.Pair;
-import com.CodeLab.Auth_Service.requestDTO.AdminResponse;
-import com.CodeLab.Auth_Service.requestDTO.UserResponse;
+import com.CodeLab.Auth_Service.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+
 import java.util.Date;
 
 @Slf4j
@@ -80,7 +79,7 @@ public class AuthService {
 
             if(isAdmin){
 
-                AdminResponse response = dbService.callGetAdminByEmail(email);
+                Admin response = dbService.callGetAdminByEmail(email);
 
                 if (response == null) {
 //                    log.warn("Admin not found for email: {}", email);
@@ -89,11 +88,11 @@ public class AuthService {
                 boolean isPasswordValid = passwordEncoder.matches(password.trim(), response.getPassword());
 //                log.info("Password validation result: {}", isPasswordValid);
 
-                return isPasswordValid ? new Pair(credentials,response.getAdminId()) : null;
+                return isPasswordValid ? new Pair(credentials,response,response.getAdminId()) : null;
 
             }
             else{
-                UserResponse response = dbService.callGetUserByEmail(email);
+                User response = dbService.callGetUserByEmail(email);
 
                 if (response == null) {
                     log.warn("User not found for email: {}", email);
@@ -102,7 +101,7 @@ public class AuthService {
                 boolean isPasswordValid = passwordEncoder.matches(password.trim(), response.getPassword());
                 log.info("Password validation result: {}", isPasswordValid);
 
-                return isPasswordValid ? new Pair(credentials,response.getUserId()) : null;
+                return isPasswordValid ? new Pair(credentials,response,response.getUserId()) : null;
             }
 
 

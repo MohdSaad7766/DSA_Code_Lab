@@ -54,6 +54,10 @@ public class ProblemController {
         return problemService.getProblemForUser(problemId);
     }
 
+    @GetMapping("/get-for-user-with-status/{problemId}")
+    public ProblemResponseDTO getProblemByIdForUser(@PathVariable UUID problemId,@RequestParam UUID userId){
+        return problemService.getProblemForUser(problemId,userId);
+    }
     @GetMapping("/get-for-system/{problemId}")
     public Problem getProblemByIdForAdmin(@PathVariable UUID problemId){
         return problemService.getProblem(problemId);

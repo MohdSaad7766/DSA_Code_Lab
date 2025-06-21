@@ -97,25 +97,25 @@ public class ContestService {
     }
 
 
-    public Contest getContestById(UUID contestId){
+    public Contest getContestById(UUID contestId) {
         return contestRepo.findById(contestId).orElse(null);
     }
 
-    public List<UpcomingContestResponseDTO> getUpcomingContests(UUID userId){
+    public List<UpcomingContestResponseDTO> getUpcomingContests(UUID userId) {
         User user = userService.getUserById(userId);
         if (user == null) {
             throw new NotFoundException("User with id-" + userId + " not Found!!!");
         }
 
-        List<Contest> list=  contestRepo.findAllUpcomingContests();
+        List<Contest> list = contestRepo.findAllUpcomingContests();
 
         List<UpcomingContestResponseDTO> responseDTOList = new ArrayList<>();
 
-        for(Contest contest : list){
-            ContestUser contestUser = contestUserRepo.findByUserAndContest(userId,contest.getContestId()).orElse(null);
+        for (Contest contest : list) {
+            ContestUser contestUser = contestUserRepo.findByUserAndContest(userId, contest.getContestId()).orElse(null);
             UpcomingContestResponseDTO responseDTO = new UpcomingContestResponseDTO();
             responseDTO.setContest(contest);
-            if(contestUser != null){
+            if (contestUser != null) {
                 responseDTO.setUserAlreadyRegistered(true);
             }
             responseDTOList.add(responseDTO);
@@ -123,23 +123,23 @@ public class ContestService {
         return responseDTOList;
     }
 
-    public List<UpcomingContestResponseDTO> getUpcomingContests(int pageNo,UUID userId) {
+    public List<UpcomingContestResponseDTO> getUpcomingContests(int pageNo, UUID userId) {
         User user = userService.getUserById(userId);
         if (user == null) {
             throw new NotFoundException("User with id-" + userId + " not Found!!!");
         }
 
         int pageSize = 10;
-        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
-        List<Contest> list=  contestRepo.findAllUpcomingContests(pageable).getContent();
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+        List<Contest> list = contestRepo.findAllUpcomingContests(pageable).getContent();
 
         List<UpcomingContestResponseDTO> responseDTOList = new ArrayList<>();
 
-        for(Contest contest : list){
-            ContestUser contestUser = contestUserRepo.findByUserAndContest(userId,contest.getContestId()).orElse(null);
+        for (Contest contest : list) {
+            ContestUser contestUser = contestUserRepo.findByUserAndContest(userId, contest.getContestId()).orElse(null);
             UpcomingContestResponseDTO responseDTO = new UpcomingContestResponseDTO();
             responseDTO.setContest(contest);
-            if(contestUser != null){
+            if (contestUser != null) {
                 responseDTO.setUserAlreadyRegistered(true);
             }
             responseDTOList.add(responseDTO);
@@ -188,14 +188,12 @@ public class ContestService {
         }
 
         LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-
-        // Fetch all currently live contests
         List<Contest> liveContests = contestRepo.findAllLiveContests(now);
-
         List<LiveContestResponseDTO> responseList = new ArrayList<>();
 
         for (Contest contest : liveContests) {
             UUID contestId = contest.getContestId();
+            long durationSeconds = contest.getDuration();
 
             boolean isRegistered = contestUserRepo
                     .findByUserAndContest(userId, contestId)
@@ -206,13 +204,22 @@ public class ContestService {
 
             boolean isSubmitted = false;
             boolean isRejoin = false;
+            long remainingTimeInSeconds = durationSeconds;
 
             if (submissionOpt.isPresent()) {
                 FullContestSubmission submission = submissionOpt.get();
+
                 if (submission.getUserSubmittedAt() != null) {
                     isSubmitted = true;
                 } else {
-                    isRejoin = true; // started but not submitted
+                    isRejoin = true;
+                    LocalDateTime userDeadline = submission.getUserStartedAt().plusSeconds(durationSeconds);
+                    LocalDateTime effectiveDeadline = userDeadline.isBefore(contest.getEndTime())
+                            ? userDeadline
+                            : contest.getEndTime();
+
+                    remainingTimeInSeconds = Duration.between(now, effectiveDeadline).getSeconds();
+                    remainingTimeInSeconds = Math.max(remainingTimeInSeconds, 0);
                 }
             }
 
@@ -220,14 +227,14 @@ public class ContestService {
             dto.setContest(contest);
             dto.setUserRegistered(isRegistered);
             dto.setContestSubmitted(isSubmitted);
-            dto.setUserRejoin(isRejoin); // ✅ Set rejoin flag
+            dto.setUserRejoin(isRejoin);
+            dto.setRemainingTimeInSeconds(remainingTimeInSeconds);
 
             responseList.add(dto);
         }
 
         return responseList;
     }
-
 
 
     public List<LiveContestResponseDTO> getLiveContests(UUID userId, int pageNo) {
@@ -246,6 +253,7 @@ public class ContestService {
 
         for (Contest contest : contestList) {
             UUID contestId = contest.getContestId();
+            long durationSeconds = contest.getDuration();
 
             boolean isRegistered = contestUserRepo
                     .findByUserAndContest(userId, contestId)
@@ -256,13 +264,22 @@ public class ContestService {
 
             boolean isSubmitted = false;
             boolean isRejoin = false;
+            long remainingTimeInSeconds = durationSeconds;
 
             if (submissionOpt.isPresent()) {
                 FullContestSubmission submission = submissionOpt.get();
+
                 if (submission.getUserSubmittedAt() != null) {
                     isSubmitted = true;
                 } else {
-                    isRejoin = true; // Started but not submitted
+                    isRejoin = true;
+                    LocalDateTime userDeadline = submission.getUserStartedAt().plusSeconds(durationSeconds);
+                    LocalDateTime effectiveDeadline = userDeadline.isBefore(contest.getEndTime())
+                            ? userDeadline
+                            : contest.getEndTime();
+
+                    remainingTimeInSeconds = Duration.between(now, effectiveDeadline).getSeconds();
+                    remainingTimeInSeconds = Math.max(remainingTimeInSeconds, 0);
                 }
             }
 
@@ -270,13 +287,15 @@ public class ContestService {
             dto.setContest(contest);
             dto.setUserRegistered(isRegistered);
             dto.setContestSubmitted(isSubmitted);
-            dto.setUserRejoin(isRejoin); // ✅ Set rejoin flag
+            dto.setUserRejoin(isRejoin);
+            dto.setRemainingTimeInSeconds(remainingTimeInSeconds);
 
             responseDTOList.add(dto);
         }
 
         return responseDTOList;
     }
+
 
 //    public static String formatDuration(long totalSeconds) {
 //        long hours = totalSeconds / 3600;
@@ -362,22 +381,23 @@ public class ContestService {
         return responseDTO;
     }
 
-    public Problem getContestProblem(UUID problemId){
+    public Problem getContestProblem(UUID problemId) {
         return problemService.getProblem(problemId);
     }
 
-    public PartialContestSubmission addPartialContestSubmission(PartialContestSubmissionRequestDTO requestDTO, Problem problem, User user, Contest contest){
-        PartialContestSubmission partialContestSubmission = PartialContestSubmissionConverter.contestPartialSubmissionConverter(requestDTO,problem,user,contest);
+    public PartialContestSubmission addPartialContestSubmission(PartialContestSubmissionRequestDTO requestDTO, Problem problem, User user, Contest contest) {
+        PartialContestSubmission partialContestSubmission = PartialContestSubmissionConverter.contestPartialSubmissionConverter(requestDTO, problem, user, contest);
         return partialContestSubmissionRepo.save(partialContestSubmission);
     }
 
     public PartialContestSubmission getPartialContestSubmission(UUID submissionId) {
         return partialContestSubmissionRepo.findById(submissionId).orElse(null);
     }
-    public PartialContestSubmission updatePartialContestSubmission(UpdatePartialContestSubmissionRequestDTO requestDTO){
+
+    public PartialContestSubmission updatePartialContestSubmission(UpdatePartialContestSubmissionRequestDTO requestDTO) {
         PartialContestSubmission submission = this.getPartialContestSubmission(requestDTO.getSubmissionId());
 
-        if (submission == null){
+        if (submission == null) {
             throw new NotFoundException("Partial Submission with id-" + requestDTO.getSubmissionId() + " not Found!!!");
         }
 
@@ -416,7 +436,7 @@ public class ContestService {
 
         double totalPercentage = 0.0;
         int problemCount = allProblems.size();
-        System.out.println("problemCount: "+problemCount);
+        System.out.println("problemCount: " + problemCount);
 //        System.out.println(allProblems.get(0));
 
         for (Problem problem : allProblems) {
@@ -429,13 +449,12 @@ public class ContestService {
                 PartialContestSubmission latest = submissions.get(submissions.size() - 1);
 //                System.out.println(latest);
                 totalPercentage += latest.getPercentage();
-            }
-            else {
+            } else {
                 System.out.println("Empty Partial Submission List");
             }
 
         }
-        System.out.println("totalPercentage: "+totalPercentage);
+        System.out.println("totalPercentage: " + totalPercentage);
 
         double averagePercentage = problemCount > 0 ? (totalPercentage / problemCount) : 0.0;
 
@@ -547,7 +566,7 @@ public class ContestService {
     }
 
     public List<PastContestResponseListDTO> getPastContestsByPage(UUID userId, int pageNo) {
-        Pageable pageable = PageRequest.of(pageNo-1, 10); // page size 10
+        Pageable pageable = PageRequest.of(pageNo - 1, 10); // page size 10
         Page<Contest> page = contestRepo.findAllPastContests(LocalDateTime.now(), pageable);
         return buildPastContestDTOs(page.getContent(), userId);
     }

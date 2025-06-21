@@ -41,17 +41,10 @@ public class AdminController {
     }
 
     @GetMapping("/get-by-email")
-    public AdminResponse geAdminByEmail(@RequestParam String email){
+    public Admin geAdminByEmail(@RequestParam String email){
         Admin admin = adminService.getAdminByEmail(email);
-        if(admin == null){
-            return null;
-        }
-        AdminResponse response = new AdminResponse();
 
-        response.setAdminId(admin.getAdminId());
-        response.setEmail(admin.getEmail());
-        response.setPassword(admin.getPassword());
-        return response;
+        return admin;
     }
 
     @PatchMapping("/change-password")

@@ -1,12 +1,11 @@
+package com.CodeLab.Auth_Service.model;
+
 import com.CodeLab.Auth_Service.enums.Gender;
 import com.CodeLab.Auth_Service.enums.Language;
 import com.CodeLab.Auth_Service.enums.UserCategory;
-
-import com.CodeLab.Auth_Service.model.Location;
 import lombok.*;
 
 import java.time.LocalDate;
-
 import java.util.UUID;
 
 @Getter
@@ -16,7 +15,7 @@ import java.util.UUID;
 @ToString
 
 
-public class UserResponse {
+public class User {
 
 
     private UUID userId;

@@ -80,6 +80,7 @@ public class ProblemController {
         if (isInvalidPage(pageNo)) return badRequest("Invalid Page No. " + pageNo);
 
         TokenValidationResponseDTO token = validateUser(header);
+
         return new ResponseEntity<>(
                 token.isValid() ? problemService.getProblemsByPage(pageNo, token.getUserId()) :
                         problemService.getProblemsByPage(pageNo),
@@ -98,8 +99,10 @@ public class ProblemController {
     }
 
     @GetMapping("/get-a-problem/{problemId}")
-    public ResponseEntity<?> getProblemForUser(@PathVariable UUID problemId) {
-        ProblemResponseDTO problem = problemService.getProblemByIdForUser(problemId);
+    public ResponseEntity<?> getProblemForUser(@PathVariable UUID problemId,@RequestHeader(value = "Authorization", required = false) String header) {
+        TokenValidationResponseDTO token = validateUser(header);
+
+        ProblemResponseDTO problem = token.isValid() ? problemService.getProblemByIdForUser(problemId,token.getUserId()) :  problemService.getProblemByIdForUser(problemId);
         if (problem == null)
             return new ResponseEntity<>(new GeneralResponseDTO("Problem with Id-" + problemId + " not Found!!!"), HttpStatus.OK);
         return new ResponseEntity<>(problem, HttpStatus.OK);

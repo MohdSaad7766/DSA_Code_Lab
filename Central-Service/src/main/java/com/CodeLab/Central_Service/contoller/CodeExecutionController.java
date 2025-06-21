@@ -23,6 +23,8 @@ public class CodeExecutionController {
     @PostMapping("/run")
     public ResponseEntity<?> runCode(@RequestBody CodeRequestDTO requestDTO, @RequestHeader(value = "Authorization", required = false) String header) {
         TokenValidationResponseDTO responseDTO = authenticationService.validateUserToken(header);
+        System.out.println(requestDTO.getVisibleCode());
+        System.out.println(requestDTO.getVisibleCode());
 
         if (!responseDTO.isValid()) {
             return new ResponseEntity<>(responseDTO, HttpStatus.UNAUTHORIZED);
@@ -39,7 +41,10 @@ public class CodeExecutionController {
     @PostMapping("/submit")
     public ResponseEntity<?> submitCode(@RequestBody CodeRequestDTO requestDTO, @RequestHeader(value = "Authorization", required = false) String header) {
         TokenValidationResponseDTO responseDTO = authenticationService.validateUserToken(header);
-        System.out.println(responseDTO.getMessage());
+        System.out.println("Problem id: "+requestDTO.getProblemId());
+        System.out.println("Language: "+requestDTO.getLanguage());
+        System.out.println("Main Code: \n"+requestDTO.getInvisibleCode());
+        System.out.println("User Code: \n"+requestDTO.getVisibleCode());
 
         if (!responseDTO.isValid()) {
             return new ResponseEntity<>(responseDTO, HttpStatus.UNAUTHORIZED);
@@ -49,6 +54,7 @@ public class CodeExecutionController {
         SubmissionResponseDTO submissionResponseDTO = new SubmissionResponseDTO();
         submissionResponseDTO.setSubmissionId(submission.getSubmissionId());
         submissionResponseDTO.setMessage("All Testcases are inserted into the messaging queue");
+
 
         return new ResponseEntity<>(submissionResponseDTO, HttpStatus.OK);
     }

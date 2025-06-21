@@ -36,6 +36,9 @@ public class ProblemService {
         return dbService.callGetProblemForUser(problemId);
     }
 
+    public ProblemResponseDTO getProblemByIdForUser(UUID problemId,UUID userId) {
+        return dbService.callGetProblemForUser(problemId,userId);
+    }
     public Problem getProblemByIdForSystem(UUID problemId) {
         return dbService.callGetProblemForSystem(problemId);
     }

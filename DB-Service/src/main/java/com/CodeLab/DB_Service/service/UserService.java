@@ -1,5 +1,6 @@
 package com.CodeLab.DB_Service.service;
 
+import com.CodeLab.DB_Service.enums.Language;
 import com.CodeLab.DB_Service.model.Submission;
 import com.CodeLab.DB_Service.model.User;
 import com.CodeLab.DB_Service.repository.SubmissionRepo;
@@ -53,6 +54,16 @@ public class UserService {
 
         return true;
 
+    }
+
+    public User updatePreferredLanguage(UUID userId, Language language){
+        User user = this.getUserById(userId);
+        if(user == null){
+            return null;
+        }
+
+        user.setPreferredLanguage(language);
+        return userRepo.save(user);
     }
 
 

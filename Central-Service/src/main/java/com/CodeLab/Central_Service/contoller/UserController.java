@@ -1,18 +1,19 @@
 package com.CodeLab.Central_Service.contoller;
 
+import com.CodeLab.Central_Service.enums.Language;
 import com.CodeLab.Central_Service.exception.UserEmailAlreadyPresentException;
+import com.CodeLab.Central_Service.model.User;
 import com.CodeLab.Central_Service.requestDTO.LoginRequestDTO;
 import com.CodeLab.Central_Service.requestDTO.UserRequestDTO;
-import com.CodeLab.Central_Service.responseDTO.GeneralResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.LoginResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.OTPVerificationResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.UserRegistrationRequestResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.*;
 import com.CodeLab.Central_Service.service.AuthenticationService;
 import com.CodeLab.Central_Service.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 
 @RestController
@@ -49,11 +50,37 @@ public class UserController {
 
     @PostMapping("/login")
     private ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO){
-        LoginResponseDTO responseDTO = authenticationService.generateToken(requestDTO,false);
-        if(responseDTO.isValid() == false){
+        UserLoginResponseDTO responseDTO = authenticationService.generateUserToken(requestDTO);
+        if(!responseDTO.isValid()){
             return new ResponseEntity<>(responseDTO,HttpStatus.UNAUTHORIZED);
 
         }
         return new ResponseEntity<>(responseDTO,HttpStatus.OK);
+    }
+
+    @PutMapping("/update-preferred-language")
+    private ResponseEntity<?> updatePreferredLanguage(@RequestParam Language langauge,@RequestHeader(value = "Authorization", required = false) String header){
+
+        TokenValidationResponseDTO responseDTO = authenticationService.validateUserToken(header);
+
+        if (!responseDTO.isValid()) {
+            return new ResponseEntity<>(responseDTO, HttpStatus.UNAUTHORIZED);
+        }
+
+        UUID userId = responseDTO.getUserId();
+
+        User profile = userService.updatePreferredLanguage(userId,langauge);
+
+        if(profile == null){
+            GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
+            generalResponseDTO.setMessage("User Not Found");
+            return new ResponseEntity<>(generalResponseDTO,HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(profile,HttpStatus.OK);
+
+
+
+
     }
 }

@@ -4,10 +4,7 @@ package com.CodeLab.Central_Service.contoller;
 import com.CodeLab.Central_Service.exception.UserEmailAlreadyPresentException;
 import com.CodeLab.Central_Service.requestDTO.AdminRequestDTO;
 import com.CodeLab.Central_Service.requestDTO.LoginRequestDTO;
-import com.CodeLab.Central_Service.responseDTO.GeneralResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.LoginResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.OTPVerificationResponseDTO;
-import com.CodeLab.Central_Service.responseDTO.TokenValidationResponseDTO;
+import com.CodeLab.Central_Service.responseDTO.*;
 import com.CodeLab.Central_Service.service.AdminService;
 import com.CodeLab.Central_Service.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+//http://localhost:8080/central/admin/login
 @RestController
 @RequestMapping("/central/admin")
 public class AdminController {
@@ -46,9 +44,9 @@ public class AdminController {
 
     @PostMapping("/login")
     private ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO){
-        LoginResponseDTO responseDTO = authenticationService.generateToken(requestDTO,true);
+        AdminLoginResponseDTO responseDTO = authenticationService.generateAdminToken(requestDTO);
 
-        if(responseDTO.isValid() == false){
+        if(!responseDTO.isValid()){
             return new ResponseEntity<>(responseDTO,HttpStatus.UNAUTHORIZED);
 
         }

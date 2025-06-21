@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public class TokenValidationResponseDTO {
     UUID userId;
+    Object object;
     boolean isValid;
     String message;
 }

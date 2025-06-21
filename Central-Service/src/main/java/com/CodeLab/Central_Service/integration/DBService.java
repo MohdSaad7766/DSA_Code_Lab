@@ -1,6 +1,7 @@
 package com.CodeLab.Central_Service.integration;
 
 import com.CodeLab.Central_Service.enums.Difficulty;
+import com.CodeLab.Central_Service.enums.Language;
 import com.CodeLab.Central_Service.enums.UserProblemStatus;
 import com.CodeLab.Central_Service.model.*;
 import com.CodeLab.Central_Service.requestDTO.*;
@@ -38,7 +39,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makeGetCall(baseURL,endpoint,new HashMap<>());
 
-        return modelMapper.map(response, IsEmailAlreadyPresentResponseDTO.class);
+        return objectMapper.convertValue(response, IsEmailAlreadyPresentResponseDTO.class);
     }
 
     public UserRegisteredResponseDTO callRegisterUser(UserRequestDTO userRequestDTO){
@@ -46,7 +47,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makePostCall(baseURL,endpoint,userRequestDTO,new HashMap<>());
 
-        return modelMapper.map(response,UserRegisteredResponseDTO.class);
+        return objectMapper.convertValue(response,UserRegisteredResponseDTO.class);
     }
 
     public void callGenerateOtp(OTPGenerateRequestDTO requestDTO){
@@ -62,7 +63,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makePutCall(baseURL,endpoint,requestDTO,map);
 
-        return modelMapper.map(response, OTPVerificationResponseDTO.class);
+        return objectMapper.convertValue(response, OTPVerificationResponseDTO.class);
 
     }
 
@@ -73,8 +74,23 @@ public class DBService extends RestAPI{
 
         Object response = this.makePutCall(baseURL,endpoint,requestDTO,map);
 
-        return modelMapper.map(response, OTPVerificationResponseDTO.class);
+        return objectMapper.convertValue(response, OTPVerificationResponseDTO.class);
 
+    }
+
+    public User callUpdatePreferredLanguage(UUID userId, Language language){
+        String endpoint = "/user/update-preferred-language";
+        HashMap<String,String> map = new HashMap<>();
+        map.put("language",language.toString());
+        map.put("userId",userId.toString());
+
+        Object response = this.makePutCall(baseURL,endpoint,null,map);
+
+        if(response == null){
+            return null;
+        }
+
+        return objectMapper.convertValue(response, User.class);
     }
 
 
@@ -85,7 +101,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makeGetCall(baseURL,endpoint,new HashMap<>());
 
-        return modelMapper.map(response, IsEmailAlreadyPresentResponseDTO.class);
+        return objectMapper.convertValue(response, IsEmailAlreadyPresentResponseDTO.class);
     }
 
     public AdminRegisteredResponseDTO callRegisterAdmin(AdminRequestDTO adminRequestDTO){
@@ -93,7 +109,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makePostCall(baseURL,endpoint,adminRequestDTO,new HashMap<>());
 
-        return modelMapper.map(response,AdminRegisteredResponseDTO.class);
+        return objectMapper.convertValue(response,AdminRegisteredResponseDTO.class);
     }
 
 
@@ -108,7 +124,7 @@ public class DBService extends RestAPI{
             return null;
         }
 
-        return modelMapper.map(response,ProblemAddedResponseDTO.class);
+        return objectMapper.convertValue(response,ProblemAddedResponseDTO.class);
     }
 
     public PaginatedResponse<?> callGetProblemsByPage(int pageNo){
@@ -133,8 +149,23 @@ public class DBService extends RestAPI{
             return null;
         }
 
-        return modelMapper.map(response,ProblemResponseDTO.class);
+        return objectMapper.convertValue(response,ProblemResponseDTO.class);
     }
+
+    public ProblemResponseDTO callGetProblemForUser(UUID problemId,UUID userId){
+        String endpoint = "/problem/get-for-user-with-status/"+problemId;
+        HashMap<String,String> map = new HashMap<>();
+        map.put("userId",userId+"");
+
+        Object response = this.makeGetCall(baseURL,endpoint,map);
+        if (response == null){
+            return null;
+        }
+
+        return objectMapper.convertValue(response,ProblemResponseDTO.class);
+    }
+
+
 
 
     public Problem callGetProblemForSystem(UUID problemId){
@@ -145,7 +176,7 @@ public class DBService extends RestAPI{
             return null;
         }
 
-        return modelMapper.map(response,Problem.class);
+        return objectMapper.convertValue(response,Problem.class);
     }
 
 
@@ -218,7 +249,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makeGetCall(baseURL,endpoint,map);
 
-        return modelMapper.map(response,Long.class);
+        return objectMapper.convertValue(response,Long.class);
 
     }
 
@@ -230,7 +261,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makeGetCall(baseURL,endpoint,map);
 
-        return modelMapper.map(response,Long.class);
+        return objectMapper.convertValue(response,Long.class);
     }
 
     public PaginatedResponse<?> callSearchProblem(String keyword,int pageNo){
@@ -277,7 +308,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makeDeleteCall(baseURL,endpoint,new HashMap<>());
 
-        return modelMapper.map(response,GeneralResponseDTO.class);
+        return objectMapper.convertValue(response,GeneralResponseDTO.class);
 
     }
 
@@ -287,7 +318,7 @@ public class DBService extends RestAPI{
 
         Object response = this.makeDeleteCall(baseURL,endpoint,new HashMap<>());
 
-        return modelMapper.map(response,GeneralResponseDTO.class);
+        return objectMapper.convertValue(response,GeneralResponseDTO.class);
     }
 
     //submission

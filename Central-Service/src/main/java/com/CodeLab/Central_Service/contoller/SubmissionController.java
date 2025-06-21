@@ -33,12 +33,14 @@ public class SubmissionController {
         }
 
         Submission submission = submissionService.getSubmissionById(submissionId);
+
         if(submission == null){
             GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
             generalResponseDTO.setMessage("Submission with id-"+submissionId+" not Found!!!");
-            return new ResponseEntity<>(generalResponseDTO, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(generalResponseDTO, HttpStatus.OK);
         }
-        return new ResponseEntity<>(submission, HttpStatus.FOUND);
+//        System.out.println("Submission: "+submission);
+        return new ResponseEntity<>(submission, HttpStatus.OK);
     }
 
     @GetMapping("/get-by-user-id")

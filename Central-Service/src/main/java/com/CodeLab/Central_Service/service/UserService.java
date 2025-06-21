@@ -1,8 +1,10 @@
 package com.CodeLab.Central_Service.service;
 
+import com.CodeLab.Central_Service.enums.Language;
 import com.CodeLab.Central_Service.exception.UserEmailAlreadyPresentException;
 import com.CodeLab.Central_Service.integration.DBService;
 import com.CodeLab.Central_Service.integration.RabbitMQIntegration;
+import com.CodeLab.Central_Service.model.User;
 import com.CodeLab.Central_Service.requestDTO.NotificationMessage;
 import com.CodeLab.Central_Service.requestDTO.OTPGenerateRequestDTO;
 import com.CodeLab.Central_Service.requestDTO.UserRequestDTO;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.security.SecureRandom;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -79,5 +82,9 @@ public class UserService {
         }
 
         return responseDTO;
+    }
+
+    public User updatePreferredLanguage(UUID userId, Language language){
+        return dbService.callUpdatePreferredLanguage(userId,language);
     }
 }
