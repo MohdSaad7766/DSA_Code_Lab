@@ -26,11 +26,7 @@ public class GeminiService {
     public Map<String, String> analyzeCodeComplexity(String code) {
         RestTemplate restTemplate = new RestTemplate();
 
-        String prompt = "Analyze the time and space complexity of the following code. " +
-                "Consider the time complexity based on the number of operations required to complete the task, " +
-                "and the space complexity based on the extra memory required for the algorithm, excluding the input data. " +
-                "Provide only the time complexity and space complexity in the format 'TC: O(...)' and 'SC: O(...)'. Do not include any other details or explanation.\n\n"
-                + code;
+        String prompt = "Analyze the time and space complexity of the following code. " + "Consider the time complexity based on the number of operations required to complete the task, " + "and the space complexity based on the extra memory required for the algorithm, excluding the input data. " + "Provide only the time complexity and space complexity in the format 'TC: O(...)' and 'SC: O(...)'. Do not include any other details or explanation.\n\n" + code;
 
         Map<String, Object> part = Map.of("text", prompt);
         Map<String, Object> content = Map.of("parts", List.of(part));
@@ -38,8 +34,6 @@ public class GeminiService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        // Optional: if API_KEY is expected in the Authorization header
-        // headers.setBearerAuth(API_KEY);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
@@ -60,8 +54,6 @@ public class GeminiService {
 
                     if (parts != null && !parts.isEmpty()) {
                         String text = parts.get(0).get("text").toString();
-                        // Optional debug log
-                        // System.out.println("Gemini response: " + text);
 
                         // Flexible regex (case-insensitive, supports variations)
                         Matcher tcMatcher = Pattern.compile("(?i)TC\\s*[:\\-]?\\s*O\\([^)]*\\)").matcher(text);
@@ -79,12 +71,8 @@ public class GeminiService {
         } catch (Exception e) {
             result.put("TC", "unavailable");
             result.put("SC", "unavailable");
-            // Optional: log error
-            // e.printStackTrace();
+
         }
-
-
-
         return result;
     }
 }

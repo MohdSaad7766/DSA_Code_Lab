@@ -39,4 +39,7 @@ public class Contest {
 
     @Column(name = "start_reminder_sent")
     private boolean startReminderSent = false;
+
+    @Column(name = "leaderboard_generated")
+    private boolean leaderboardGenerated = false;
 }

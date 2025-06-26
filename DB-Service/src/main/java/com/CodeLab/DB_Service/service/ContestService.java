@@ -390,10 +390,6 @@ public class ContestService {
         return partialContestSubmissionRepo.save(partialContestSubmission);
     }
 
-    public PartialContestSubmission getPartialContestSubmission(UUID submissionId) {
-        return partialContestSubmissionRepo.findById(submissionId).orElse(null);
-    }
-
     public PartialContestSubmission updatePartialContestSubmission(UpdatePartialContestSubmissionRequestDTO requestDTO) {
         PartialContestSubmission submission = this.getPartialContestSubmission(requestDTO.getSubmissionId());
 
@@ -409,6 +405,10 @@ public class ContestService {
         submission.setTotalPassedTestCases(requestDTO.getTotalPassedTestCases());
 
         return partialContestSubmissionRepo.save(submission);
+    }
+
+    public PartialContestSubmission getPartialContestSubmission(UUID submissionId){
+        return partialContestSubmissionRepo.findById(submissionId).orElse(null);
     }
 
 
@@ -505,10 +505,12 @@ public class ContestService {
                 entry.setTotalTimeTaken(submission.getTotalTimeTaken());
             } else {
                 entry.setPercentage(0.0);
+
                 entry.setTotalTimeTaken(contest.getDuration()); // Max duration if not submitted
             }
 
-            entries.add(entry);
+//            entries.add(entry);
+            System.out.println(entries.add(entry));
         }
 
         // 7. Sort with 3-level comparator: percentage ↓, time ↑, startedAt ↑

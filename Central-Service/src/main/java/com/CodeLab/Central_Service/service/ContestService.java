@@ -2,6 +2,7 @@ package com.CodeLab.Central_Service.service;
 
 import com.CodeLab.Central_Service.integration.DBService;
 import com.CodeLab.Central_Service.model.FullContestSubmission;
+import com.CodeLab.Central_Service.model.PartialContestSubmission;
 import com.CodeLab.Central_Service.model.Problem;
 import com.CodeLab.Central_Service.requestDTO.ContestRequestDTO;
 import com.CodeLab.Central_Service.responseDTO.*;
@@ -65,6 +66,10 @@ public class ContestService {
 
     public PastContestResponseDTO getPastContestDetails(UUID userId,UUID contestId){
         return dbService.callGetPastContestDetails(userId,contestId);
+    }
+
+    public PartialContestSubmission getPartialContestSubmission(UUID submissionId){
+        return dbService.callGetPartialContestSubmission(submissionId);
     }
 
 }

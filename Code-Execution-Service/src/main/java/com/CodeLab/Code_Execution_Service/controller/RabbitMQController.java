@@ -43,7 +43,10 @@ public class RabbitMQController {
     @RabbitListener(queues = "contest-submission-queue")
     public void handleContestSubmissions(@Payload List<RunCodeRequestDTO> requestList) {
         System.out.println("Contest Submission");
+//        System.out.println(requestList.get(0).getInvisibleCode());
+//        System.out.println(requestList.get(0).getVisibleCode());
         ContestSubmission(requestList);
+
     }
 
     public void NormalSubmission(List<RunCodeRequestDTO> requestList){

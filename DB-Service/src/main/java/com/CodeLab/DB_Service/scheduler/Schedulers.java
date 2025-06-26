@@ -31,39 +31,29 @@ public class Schedulers {
     @Autowired
     private RabbitMQIntegration rabbitMQIntegration;
 
-    /**
-     * This method runs every 10 seconds (after the previous execution completes).
-     * It generates leaderboards for contests that have ended but don't yet have one.
-     */
     @Scheduled(fixedDelay = 10000)
     @Transactional
     public void generateLeaderboardsForEndedContests() {
-        System.out.println("Check for Leaderboard Generation");
-
         List<Contest> endedContests = contestRepo.findAllEndedContestsWithoutLeaderboard(LocalDateTime.now());
 
         if (endedContests.isEmpty()) {
             return;
         }
-
         for (Contest contest : endedContests) {
             try {
                 contestService.generateLeaderboard(contest.getContestId());
-                System.out.println("✅ Generated leaderboard for contest: " + contest.getContestName());
+                //Mark as leaderboard generated
+                contest.setLeaderboardGenerated(true);
+                contestRepo.save(contest);
             } catch (Exception e) {
-                System.err.println("❌ Failed to generate leaderboard for contest: " + contest.getContestName());
                 e.printStackTrace();
             }
         }
     }
 
-    /**
-     * Sends start reminders to registered users for contests starting now.
-     */
     @Scheduled(fixedDelay = 10000)
     @Transactional
     public void sendStartRemindersForContestsStartingNow() {
-        System.out.println("Check for Contest Start Reminder Sent");
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startWindow = now.minusSeconds(5);
         LocalDateTime endWindow = now.plusSeconds(10); // buffer to catch near-future contests
@@ -74,7 +64,6 @@ public class Schedulers {
             if (contest.isStartReminderSent()) {
                 continue; // skip if already sent
             }
-
             List<User> registeredUsers = contestUserRepo.findUsersByContestId(contest.getContestId());
 
             for (User user : registeredUsers) {

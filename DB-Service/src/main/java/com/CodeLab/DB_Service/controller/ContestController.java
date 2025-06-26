@@ -99,6 +99,11 @@ public class ContestController {
         return contestService.updatePartialContestSubmission(requestDTO);
     }
 
+    @GetMapping("/get-partial-submission")
+    public PartialContestSubmission getPartialContestsSubmission(@RequestParam UUID submissionId){
+        return contestService.getPartialContestSubmission(submissionId);
+    }
+
     @PostMapping("/submit")
     public FullContestSubmission submitContest(@RequestParam UUID userId,@RequestParam UUID contestId){
         return contestService.submitContest(userId,contestId);

@@ -20,4 +20,6 @@ public class Company {
 
     private String companyName;
 
+    private int totalProblem;
+
 }

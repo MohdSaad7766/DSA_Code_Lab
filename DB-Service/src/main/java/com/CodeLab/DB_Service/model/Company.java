@@ -24,4 +24,7 @@ public class Company {
     @Column(name = "company_name",nullable = false)
     private String companyName;
 
+    @Column(name = "total_problem")
+    private int totalProblem;
+
 }

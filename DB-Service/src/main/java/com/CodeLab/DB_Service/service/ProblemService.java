@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @Service
 public class ProblemService {
 
-    private static final int PAGE_SIZE = 3;
+    private static final int PAGE_SIZE = 5;
     private static final Sort SORT_BY_PROBLEM_NO = Sort.by("problemNo").ascending();
 
     @Autowired
@@ -81,19 +81,58 @@ public class ProblemService {
     /**
      * Add a new problem with specified visibility.
      */
+//    public Problem addProblem(ProblemRequestDTO problemRequestDTO, boolean isVisible) {
+//        Problem problem = ProblemConverter.requestDTO_problemConverter(problemRequestDTO, isVisible);
+//        problem.setProblemNo((int) this.getProblemCount() + 1);
+//
+//        Arrays.stream(problem.getTopicList().split(","))
+//                .map(String::trim)
+//                .forEach(topic -> topicRepo.findByTopicName(topic)
+//                        .orElseGet(() -> topicRepo.save(TopicConverter.topicConverter(new TopicRequestDTO(topic)))));
+//
+//        Arrays.stream(problem.getCompanyList().split(","))
+//                .map(String::trim)
+//                .forEach(company -> companyRepo.findByCompanyName(company)
+//                        .orElseGet(() -> companyRepo.save(CompanyConverter.companyConverter(new CompanyRequestDTO(company)))));
+//
+//        return problemRepo.save(problem);
+//    }
+
     public Problem addProblem(ProblemRequestDTO problemRequestDTO, boolean isVisible) {
         Problem problem = ProblemConverter.requestDTO_problemConverter(problemRequestDTO, isVisible);
         problem.setProblemNo((int) this.getProblemCount() + 1);
 
+        // Handle Topics
         Arrays.stream(problem.getTopicList().split(","))
                 .map(String::trim)
-                .forEach(topic -> topicRepo.findByTopicName(topic)
-                        .orElseGet(() -> topicRepo.save(TopicConverter.topicConverter(new TopicRequestDTO(topic)))));
+                .forEach(topicName -> {
+                    Topic topic = topicRepo.findByTopicName(topicName)
+                            .map(existingTopic -> {
+                                existingTopic.setTotalProblem(existingTopic.getTotalProblem()+1);
+                                return topicRepo.save(existingTopic);
+                            })
+                            .orElseGet(() -> {
+                                Topic newTopic = TopicConverter.topicConverter(new TopicRequestDTO(topicName));
+                                newTopic.setTotalProblem(1);
+                                return topicRepo.save(newTopic);
+                            });
+                });
 
+        // Handle Companies
         Arrays.stream(problem.getCompanyList().split(","))
                 .map(String::trim)
-                .forEach(company -> companyRepo.findByCompanyName(company)
-                        .orElseGet(() -> companyRepo.save(CompanyConverter.companyConverter(new CompanyRequestDTO(company)))));
+                .forEach(companyName -> {
+                    Company company = companyRepo.findByCompanyName(companyName)
+                            .map(existingCompany -> {
+                                existingCompany.setTotalProblem(existingCompany.getTotalProblem() + 1);
+                                return companyRepo.save(existingCompany);
+                            })
+                            .orElseGet(() -> {
+                                Company newCompany = CompanyConverter.companyConverter(new CompanyRequestDTO(companyName));
+                                newCompany.setTotalProblem(1);
+                                return companyRepo.save(newCompany);
+                            });
+                });
 
         return problemRepo.save(problem);
     }

@@ -242,4 +242,19 @@ public class ContestController {
         return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }
 
+
+    @GetMapping("/get-partial-submission")
+    public ResponseEntity<?> getPartialContestSubmission(@RequestParam UUID submissionId,@RequestHeader(value = "Authorization", required = false) String header){
+        TokenValidationResponseDTO authResponseDTO = authenticationService.validateUserToken(header);
+        System.out.println(authResponseDTO.getMessage());
+
+        if (!authResponseDTO.isValid()) {
+            return new ResponseEntity<>(authResponseDTO, HttpStatus.UNAUTHORIZED);
+        }
+
+        PartialContestSubmission partialContestSubmission = contestService.getPartialContestSubmission(submissionId);
+        return new ResponseEntity<>(partialContestSubmission, HttpStatus.OK);
+
+    }
+
 }

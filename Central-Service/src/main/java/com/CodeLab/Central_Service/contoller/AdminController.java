@@ -50,6 +50,7 @@ public class AdminController {
             return new ResponseEntity<>(responseDTO,HttpStatus.UNAUTHORIZED);
 
         }
+        System.out.println(responseDTO);
         return new ResponseEntity<>(responseDTO,HttpStatus.OK);
     }
 

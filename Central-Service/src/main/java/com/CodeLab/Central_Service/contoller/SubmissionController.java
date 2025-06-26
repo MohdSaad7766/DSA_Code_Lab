@@ -55,7 +55,7 @@ public class SubmissionController {
         UUID userId = responseDTO.getUserId();
 
         List<Submission> submissions = submissionService.getSubmissionsByUserId(userId);
-        return new ResponseEntity<>(submissions, HttpStatus.FOUND);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
     }
     @GetMapping("/get-by-user-id-and-problem-id")
     public ResponseEntity<?> getSubmissionsByUserId(@RequestParam UUID problemId,@RequestHeader(value = "Authorization", required = false) String header){
@@ -69,7 +69,7 @@ public class SubmissionController {
         UUID userId = responseDTO.getUserId();
 
         List<Submission> submissions = submissionService.getSubmissionsByUserIdAndProblemId(userId,problemId);
-        return new ResponseEntity<>(submissions, HttpStatus.FOUND);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
     }
 
     @GetMapping("/get-by-problem-id")
@@ -83,7 +83,7 @@ public class SubmissionController {
 
 
         List<Submission> submissions = submissionService.getSubmissionsByProblemId(problemId);
-        return new ResponseEntity<>(submissions, HttpStatus.FOUND);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
     }
 
 
@@ -98,7 +98,7 @@ public class SubmissionController {
 
 
         List<Submission> submissions = submissionService.getAllSubmissions();
-        return new ResponseEntity<>(submissions, HttpStatus.FOUND);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
     }
 
     @GetMapping("/get-latest-of-user")
@@ -117,8 +117,8 @@ public class SubmissionController {
         if(submission == null){
             GeneralResponseDTO generalResponseDTO = new GeneralResponseDTO();
             generalResponseDTO.setMessage("No submission found by User with id-"+userID);
-            return new ResponseEntity<>(generalResponseDTO, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(generalResponseDTO, HttpStatus.OK);
         }
-        return new ResponseEntity<>(submission, HttpStatus.FOUND);
+        return new ResponseEntity<>(submission, HttpStatus.OK);
     }
 }

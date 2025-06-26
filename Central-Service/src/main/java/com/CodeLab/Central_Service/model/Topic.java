@@ -19,4 +19,6 @@ public class Topic {
 
     private String topicName;
 
+
+    private int totalProblem;
 }

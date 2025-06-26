@@ -29,4 +29,6 @@ public class Contest {
     private long duration; //In Seconds
 
     private boolean startReminderSent = false;
+
+    private boolean leaderboardGenerated = false;
 }

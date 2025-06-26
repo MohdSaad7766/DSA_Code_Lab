@@ -13,6 +13,8 @@ public class ContestConverter {
         contest.setStartTime(requestDTO.getStartTime());
         contest.setEndTime(requestDTO.getEndTime());
         contest.setDuration(requestDTO.getDuration());
+        contest.setStartReminderSent(false);
+        contest.setLeaderboardGenerated(false);
 
         return contest;
     }

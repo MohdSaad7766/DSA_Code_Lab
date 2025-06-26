@@ -29,7 +29,7 @@ public class AuthService {
 
     Long expirationTime = 604800000L;  //7 days
 
-    public String generateToken(String email,String password){
+    public String generateToken(String email, String password) {
 
 
         String credentials = email + ":" + password;
@@ -37,10 +37,8 @@ public class AuthService {
         String jwtToken = Jwts.builder().setSubject(credentials)
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .setIssuedAt(new Date())
-                .signWith(SignatureAlgorithm.HS256,secretKey)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
-
-        log.info(jwtToken);
         return jwtToken;
     }
 
@@ -63,47 +61,33 @@ public class AuthService {
         try {
             String credentials = decryptToken(token);
             if (credentials == null) {
-                log.warn("Invalid token: decryption failed");
                 return null;
             }
 
             String[] parts = credentials.split(":");
             if (parts.length != 2) {
-                log.warn("Invalid token: malformed credentials");
                 return null;
             }
 
             String email = parts[0];
-
             String password = parts[1];
 
-            if(isAdmin){
-
+            if (isAdmin) {
                 Admin response = dbService.callGetAdminByEmail(email);
-
                 if (response == null) {
-//                    log.warn("Admin not found for email: {}", email);
                     return null;
                 }
                 boolean isPasswordValid = passwordEncoder.matches(password.trim(), response.getPassword());
-//                log.info("Password validation result: {}", isPasswordValid);
-
-                return isPasswordValid ? new Pair(credentials,response,response.getAdminId()) : null;
-
-            }
-            else{
+                return isPasswordValid ? new Pair(credentials, response, response.getAdminId()) : null;
+            } else {
                 User response = dbService.callGetUserByEmail(email);
-
                 if (response == null) {
                     log.warn("User not found for email: {}", email);
                     return null;
                 }
                 boolean isPasswordValid = passwordEncoder.matches(password.trim(), response.getPassword());
-                log.info("Password validation result: {}", isPasswordValid);
-
-                return isPasswordValid ? new Pair(credentials,response,response.getUserId()) : null;
+                return isPasswordValid ? new Pair(credentials, response, response.getUserId()) : null;
             }
-
 
 
         } catch (Exception e) {

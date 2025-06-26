@@ -20,5 +20,6 @@ public class PastContestResponseDTO {
     private Integer userRank;
     List<LeaderboardEntryResponseDTO> leaderboard = new ArrayList<>();
     List<ContestProblem> problemList = new ArrayList<>();
+//    List<String> percentageGotByUser;
     private int totalParticipants;
 }

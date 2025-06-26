@@ -562,5 +562,15 @@ public class DBService extends RestAPI{
         return objectMapper.convertValue(response,PastContestResponseDTO.class);
     }
 
+    public PartialContestSubmission callGetPartialContestSubmission(UUID submissionId){
+        String endpoint = "/contest/get-partial-submission";
+        HashMap<String, String> map = new HashMap<>();
+        map.put("submissionId", submissionId.toString());
+
+        Object response = this.makeGetCall(baseURL,endpoint,map);
+
+        return objectMapper.convertValue(response,PartialContestSubmission.class);
+    }
+
 
 }

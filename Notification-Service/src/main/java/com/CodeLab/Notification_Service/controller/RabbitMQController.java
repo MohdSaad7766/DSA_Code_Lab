@@ -47,7 +47,5 @@ public class RabbitMQController {
                 System.out.println(requestDTO);
             }
         }
-
-
     }
 }

@@ -23,4 +23,7 @@ public class Topic {
     @Column(name = "topic_name",unique = true)
     private String topicName;
 
+    @Column(name = "total_problem")
+    private int totalProblem;
+
 }
